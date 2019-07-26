@@ -41,6 +41,9 @@ CS=list(set(DD['customer_id'][DD['counts']>4]))
 global CUSTOMER
 CUSTOMER=33569
 
+
+#33569
+
 #95 gives decent results
 
 def convert_to_mercator(lngs, lats):
@@ -138,6 +141,7 @@ def my_slider_handler(attr,old,new):
     e_datapoints_df = filtered_df[filtered_df['e_label'] != '-1']
     #noise_source = ColumnDataSource()
     #datapoints_source = ColumnDataSource()
+    counts=len(filtered_df['label'])
     DDD=filtered_df[(filtered_df['label']!='-1') & (filtered_df['e_label']!='-1')]
     lngs=list(zip(DDD['s_merc_lng'],DDD['e_merc_lng']))
     lats=list(zip(DDD['s_merc_lat'],DDD['e_merc_lat']))
@@ -145,12 +149,34 @@ def my_slider_handler(attr,old,new):
     dataf=pd.DataFrame()
     dataf['lats']=lats
     dataf['lngs']=lngs
-    
-    
-    data_source.data=dict(
-            xs=dataf['lngs'],
-            ys=dataf['lats'])
+    Zipped=list(zip(DDD['label'],DDD['e_label']))
+     
+    zipped_set=set(Zipped)
 
+
+    dataf=pd.DataFrame()
+    dataf['lats']=lats
+    dataf['lngs']=lngs
+    dataf['Zipped']=Zipped
+    dataf.Zipped=dataf.Zipped.astype(str)
+    
+    zipped_set=list(set(dataf.Zipped))
+    #zipped_set2=list(set(dataf.Zipped))
+    for o in range(len(zipped_set)):
+       zipped_set[o]=str(zipped_set[o])
+       
+    groupby=dataf.groupby(['Zipped']).size().reset_index(name='counts')
+
+    dataf=pd.merge(dataf, groupby, on='Zipped', how='left')
+    dataf['legend']=dataf[['Zipped','counts']].apply(lambda x:str(x[0])+':'+str(x[1])+'('+str(counts)+')',axis=1)   
+
+    data_source.data=dict(
+        xs=dataf['lngs'],
+        ys=dataf['lats'],
+        label=dataf['Zipped'],
+        legend=dataf['legend'])
+    
+    
     noise_source.data = dict(
         x=noise_df['s_merc_lng'],
         y=noise_df['s_merc_lat'],
@@ -193,6 +219,7 @@ min_meters=50
 
 filtered_df=set_clusters(df[df['customer_id']==CUSTOMER],5,5,min_meters)
 
+counts=len(filtered_df['label'])
 
 DDD=filtered_df[(filtered_df['label']!='-1') & (filtered_df['e_label']!='-1')]
 
@@ -201,6 +228,28 @@ lats=list(zip(DDD['s_merc_lat'],DDD['e_merc_lat']))
 dataf=pd.DataFrame()
 dataf['lats']=lats
 dataf['lngs']=lngs
+Zipped=list(zip(DDD['label'],DDD['e_label']))
+     
+zipped_set=set(Zipped)
+
+
+dataf=pd.DataFrame()
+dataf['lats']=lats
+dataf['lngs']=lngs
+dataf['Zipped']=Zipped
+dataf.Zipped=dataf.Zipped.astype(str)
+zipped_set=list(set(dataf.Zipped))
+
+#zipped_set2=list(set(dataf.Zipped))
+
+groupby=dataf.groupby(['Zipped']).size().reset_index(name='counts')
+
+dataf=pd.merge(dataf, groupby, on='Zipped', how='left')
+dataf['legend']=dataf[['Zipped','counts']].apply(lambda x:str(x[0])+':'+str(x[1])+'('+str(counts)+')',axis=1)   
+    
+
+for o in range(len(zipped_set)):
+    zipped_set[o]=str(zipped_set[o])
 
 
 check=df[df['customer_id']==21]
@@ -251,8 +300,10 @@ e_datapoints_source.data = dict(
     )
 
 data_source.data=dict(
-        xs=dataf['lngs'],
-        ys=dataf['lats'])
+    xs=dataf['lngs'],
+    ys=dataf['lats'],
+    label=dataf['Zipped'],
+    legend=dataf['legend'])
 
 palette_range = [str(x) for x in range(0, 20)]
 
@@ -272,6 +323,7 @@ map_figure.add_tile(CARTODBPOSITRON_RETINA)
 
 #show(map_figure)
 
+from bokeh.transform import linear_cmap
   
 def plot_points(map_figure, noise_source, datapoints_source,e_noise_source,e_datapoints_source):
     noise_point_size = 1
@@ -299,7 +351,10 @@ def plot_points(map_figure, noise_source, datapoints_source,e_noise_source,e_dat
                           palette=Category20[20],
                           factors=palette_range),line_color='red',legend='label')
     
-    map_figure.multi_line(xs='xs', ys='ys',source=data_source)
+    map_figure.multi_line(xs='xs', ys='ys',source=data_source,line_color=factor_cmap(
+                          'label',
+                          palette=Category20[20],
+                          factors=zipped_set),legend='legend')
                
     #show(map_figure)                  
                       
@@ -316,11 +371,13 @@ layout = row(
                 widgetbox(Min_n, width=300),
                 Percent,
                 width=400),    
-            column(map_figure),
+            column(map_figure,width=800),
         )
 
 curdoc().add_root(layout)
 curdoc().title = 'DOW and Hour Clustering Analysis'
+
+
 
 #logging.info('initial map drawn')
 

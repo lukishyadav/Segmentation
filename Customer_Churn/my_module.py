@@ -56,6 +56,29 @@ def remove_outliers(X,x):
                 i=i+1
     return OLL[-1],OUL[-1],f
 
+def Remove_Outliers(X,x,N):
+    OLL=[]
+    OUL=[]
+    i=0 
+    while i<N+1:
+        if i==0:
+            a,b,c,d,e,f=outlier(X,x)
+            OLL.append(d)
+            OUL.append(e) 
+            i=i+1
+        else:
+            a,b,c,d,e,f=outlier(f,x)
+            OLL.append(d)
+            OUL.append(e)
+            if (float(OLL[i-1])!=float(OLL[i])) and (float(OUL[i-1])!=float(OUL[i])):                    
+                break
+            else:
+                i=i+1
+    return OLL[-1],OUL[-1],f
+
+
+
+
 def performance_S(model,X,Y,seed):
     import warnings
     warnings.filterwarnings("ignore")

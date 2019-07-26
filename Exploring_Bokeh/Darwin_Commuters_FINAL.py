@@ -142,14 +142,20 @@ def my_slider_handler(attr,old,new):
     lngs=list(zip(DDD['s_merc_lng'],DDD['e_merc_lng']))
     lats=list(zip(DDD['s_merc_lat'],DDD['e_merc_lat']))
     
+    Zipped=list(zip(DDD['label'],DDD['e_label']))
+     
+    zipped_set=set(Zipped)
+
+
     dataf=pd.DataFrame()
     dataf['lats']=lats
     dataf['lngs']=lngs
-    
+    dataf['Zipped']=Zipped
     
     data_source.data=dict(
             xs=dataf['lngs'],
-            ys=dataf['lats'])
+            ys=dataf['lats'],
+            label=dataf['Zipped'])
 
     noise_source.data = dict(
         x=noise_df['s_merc_lng'],
@@ -196,11 +202,16 @@ filtered_df=set_clusters(df[df['customer_id']==CUSTOMER],5,5,min_meters)
 
 DDD=filtered_df[(filtered_df['label']!='-1') & (filtered_df['e_label']!='-1')]
 
+Zipped=list(zip(DDD['label'],DDD['e_label']))
+
+zipped_set=set(Zipped)
+
 lngs=list(zip(DDD['s_merc_lng'],DDD['e_merc_lng']))
 lats=list(zip(DDD['s_merc_lat'],DDD['e_merc_lat']))
 dataf=pd.DataFrame()
 dataf['lats']=lats
 dataf['lngs']=lngs
+dataf['Zipped']=Zipped
 
 
 check=df[df['customer_id']==21]
@@ -252,7 +263,8 @@ e_datapoints_source.data = dict(
 
 data_source.data=dict(
         xs=dataf['lngs'],
-        ys=dataf['lats'])
+        ys=dataf['lats'],
+        label=dataf['Zipped'])
 
 palette_range = [str(x) for x in range(0, 20)]
 
@@ -299,7 +311,9 @@ def plot_points(map_figure, noise_source, datapoints_source,e_noise_source,e_dat
                           palette=Category20[20],
                           factors=palette_range),line_color='red',legend='label')
     
-    map_figure.multi_line(xs='xs', ys='ys',source=data_source)
+    map_figure.multi_line(xs='xs', ys='ys',source=data_source,fill_color=factor_cmap(
+                          'label',
+                          palette=Category20[20]))
                
     #show(map_figure)                  
                       
@@ -346,7 +360,7 @@ if not sys.warnoptions:
 
 import itertools
 
-sliced = list(itertools.islice(CS, 100))
+sliced = list(itertools.islice(CS, 10))
 
 #global DF
 
@@ -367,7 +381,7 @@ print(time.time()-s)
 
 
 
-
+DF=pd.read_csv('/Users/lukishyadav/Desktop/Gittable_Work/Commuters/100_Customers_CLustered.csv')
 
 
 
@@ -403,7 +417,7 @@ Commuters rentals
 final_count=DF.groupby(['customer_id']).size().reset_index(name='counts')
 
 DF2=DF[DF['customer_id']==95].copy()
-DDD=DF2[(DF2['label']!='-1') & (DF2['e_label']!='-1')]
+DDD=DF2[(DF2['label']!=-1) & (DF2['e_label']!=-1)]
 
 Zipped=list(zip(DDD['label'],DDD['e_label']))
 
@@ -414,13 +428,15 @@ collections.Counter(Zipped)
 
 #s1.line([2,3],[4,6],line_width=2)
 
-lngs=list(zip(DF2['s_merc_lng'],DF2['e_merc_lng']))
-lats=list(zip(DF2['s_merc_lat'],DF2['e_merc_lat']))
+lngs=list(zip(DDD['s_merc_lng'],DDD['e_merc_lng']))
+lats=list(zip(DDD['s_merc_lat'],DDD['e_merc_lat']))
 
 dataf=pd.DataFrame()
 dataf['lats']=lats
 dataf['lngs']=lngs
+dataf['Zipped']=Zipped
 
-p.multi_line
+zipped_set
+
 
     
