@@ -124,11 +124,13 @@ def set_clusters(df, percent, min_n, min_meters):
     return df
 
 
-def set_time_clusters(df,min_n, epsilon):
+def set_time_clusters(df,percent,min_n,epsilon):
     # set the data up for clustering
     X = np.column_stack((df['seconds_start'], df['seconds_end']))
     # clustering
-    dbscan = DBSCAN(eps=epsilon, min_samples=min_n,).fit(np.radians(X))
+    ms=(percent*len(X))/100
+    MS=max(min_n,ms)
+    dbscan = DBSCAN(eps=epsilon, min_samples=MS).fit(X)
     # create list of clusters and labels
     #n_clusters_ = len(set(dbscan.labels_)) - (1 if -1 in dbscan.labels_ else 0)
     #n_noise_ = list(dbscan.labels_).count(-1)
@@ -288,15 +290,15 @@ zipped_set
 
 #m,n,factor=my_module.remove_outliers(Commuters,'factor') 
 
-m,n,counts_x=my_module.remove_outliers(Commuters,'counts_x') 
+#m,n,counts_x=my_module.remove_outliers(Commuters,'counts_x') 
 
 
 #M,N,Factor=my_module.Remove_Outliers(Commuters,'factor',1) 
 
-sns.boxplot(x=Factor['factor'])
+#sns.boxplot(x=Factor['factor'])
 
 
-finale=pd.merge(factor,counts_x, on='customer_id', how='inner')
+#finale=pd.merge(factor,counts_x, on='customer_id', how='inner')
 
 
 
@@ -308,21 +310,26 @@ finale=pd.merge(Commuters,counts_x, on='customer_id', how='inner')
 finale.reset_index(inplace=True)
 
 %matplotlib auto
-X=finale[['factor_x','counts_x_y']].values
+X=finale[['counts_x_y']].values
 from sklearn.preprocessing import MinMaxScaler
 M=MinMaxScaler(feature_range=(0, 1), copy=True)
 M.fit(X)
 xX=M.transform(X)
 #xX=X`
+
+'factor_x',
+
+XX=np.append(finale['factor_x'].values.reshape(-1,1),xX,axis=1)
+
  
 from sklearn.cluster import KMeans
 algo=KMeans(n_clusters=6, random_state=0)
-h=my_module.Cluster(xX,algo,x_l='Common_to_Total_rental_ratio',y_l='Rental_Counts')
+h=my_module.Cluster(XX,algo,x_l='Common_to_Total_rental_ratio',y_l='Rental_Counts')
 
 
 from sklearn.cluster import AgglomerativeClustering
 algo = AgglomerativeClustering(n_clusters=4).fit(X)
-h=my_module.Cluster(xX,algo,x_l='Common_to_Total_rental_ratio',y_l='Rental_Counts')
+h=my_module.Cluster(XX,algo,x_l='Common_to_Total_rental_ratio',y_l='Rental_Counts')
 
 
 
@@ -359,17 +366,19 @@ Clustering on the  basis of start and endtime of rental for a customer.
        
 """
 
+
+"""
 lame=df.head(1000).copy()
-lame=df[df['customer_id']==33569].copy()
-
-lame['start time'].iloc[1]
-
 fmt = '%Y-%m-%d %H:%M:%S'
 f='%Y-%m-%d'
 then = datetime.datetime.strptime('2018-12-31 23:59:59', f)
-
-
 x='2018-12-31 23:59:59'
+"""
+
+
+
+
+
 
 
 """
@@ -388,28 +397,36 @@ def in_seconds(x):
     value=(current-Day).seconds
     return value
 
+
+"""
+lame=df[df['customer_id']==33569].copy()
+
+lame=df[df['customer_id']==266].copy()
+
+lame=lame[lame['Distance driven']!=0]
+
+
+#lame['Distance driven'].iloc[1]
+
 lame['seconds_start']=lame['start time'].apply(in_seconds)
 
 lame['seconds_end']=lame['end datetime'].apply(in_seconds)
+"""
 
-
-df['start time'].iloc[1]
+#df['start time'].iloc[1]
 
 df['seconds_start']=df['start time'].apply(in_seconds)
 
 df['seconds_end']=df['end datetime'].apply(in_seconds)
     
-C=df.describe() 
-
-df.dtypes
-
-df.iloc[df.dtypes == float,5]
- 
-df.select_dtypes(include ='float64')
-   
+# =============================================================================
+# C=df.describe() 
+# df.dtypes
+# df.iloc[df.dtypes == float,5] 
+# df.select_dtypes(include ='float64')
+#    
+# =============================================================================
 df.isnull().sum()
-
-df.dropna(inplace=True)
 
 # =============================================================================
 # df['Days from last rental'].iloc[1][0:19]
@@ -424,12 +441,32 @@ df.dropna(inplace=True)
 # =============================================================================
 
 
+
+
+"""
+
+
+CHECK FPR WHAT VALUE OF EPSILON WORKS FOR TIME BASED DBSCAN
+
+lame=df[df['customer_id']==80999].copy()
+
+lame=lame[lame['Distance driven']!=0]
+
+
+#lame['Distance driven'].iloc[1]
+
+lame['seconds_start']=lame['start time'].apply(in_seconds)
+
+lame['seconds_end']=lame['end datetime'].apply(in_seconds)
+
 xX=lame[['seconds_start','seconds_end']].values
 
 %matplotlib auto
 from sklearn.cluster import DBSCAN
 ms=len(xX)*0.05
-algo = DBSCAN(eps=1200, min_samples=ms).fit(xX)
+min_samples=5
+MS=max(min_samples,ms)
+algo = DBSCAN(eps=1200, min_samples=MS).fit(xX)
 h=my_module.Cluster(xX,algo,x_l='Common_to_Total_rental_ratio',y_l='Rental_Counts')
 
 
@@ -450,16 +487,20 @@ LIST=[index for index, value in enumerate(List) if value != -1]
 
 Check=lame.ix[LIST]  
 
-
+"""
 
 import time
 s=time.time()
 
-G=XXX.apply(lambda x:set_time_clusters(x,5,1200))
+G=XXX.apply(lambda x:set_time_clusters(x,5,5,1200))
 
 print(time.time()-s)  
 
 
+
+XXXX=df[df['customer_id']==80999].groupby('customer_id')
+
+GG=XXXX.apply(lambda x:set_time_clusters(x,5,5,1200))
 
 
 FD=G.copy()
@@ -479,7 +520,9 @@ final_count=FD.groupby(['customer_id']).size().reset_index(name='counts')
 
 FD2=FD.copy()
 
-DDD=FD2[(FD2['time_label']!="-  1")]
+FD2['time_label'].iloc[1]
+
+DDD=FD2[(FD2['time_label']!="-1")]
 
 final_count2=DDD.groupby(['customer_id']).size().reset_index(name='counts')
 
@@ -510,14 +553,65 @@ xX=Def[['time_factor','factor']].values
 
 %matplotlib auto
 from sklearn.cluster import KMeans
-algo=KMeans(n_clusters=6, random_state=0)
+algo=KMeans(n_clusters=3, random_state=0)
 h=my_module.Cluster(xX,algo,x_l='time_factor',y_l='factor')
 
 
 from sklearn.cluster import AgglomerativeClustering
-algo = AgglomerativeClustering(n_clusters=4)
+algo = AgglomerativeClustering(n_clusters=3)
 h=my_module.Cluster(xX,algo,x_l='time_factor',y_l='factor')
 
 
 
 fds=g[g['customer_id']==33569]
+
+
+
+
+
+
+
+
+m,n,counts_x=my_module.remove_outliers(T_Commuters,'counts_x') 
+
+
+m,n,counts_y=my_module.remove_outliers(T_Commuters,'counts_y') 
+
+
+finale=pd.merge(counts_x,counts_y, on='customer_id', how='inner')
+
+finale.reset_index(inplace=True)
+
+
+
+X=finale[['counts_x_x','factor_x']].values
+
+xX=finale[['counts_x_x']].values
+from sklearn.preprocessing import MinMaxScaler
+M=MinMaxScaler(feature_range=(0, 1), copy=True)
+M.fit(xX)
+xX=M.transform(xX)
+
+
+XX=np.append(xX,finale['factor_x'].values.reshape(-1,1),axis=1)
+
+#xX.shape
+
+
+
+#xX[xX[:,1]==X[:,1],1]
+
+np.append(a, z, axis=1)
+
+xX[:,1]
+xX[1,1]
+X[1,1]
+
+from sklearn.cluster import KMeans
+algo=KMeans(n_clusters=3, random_state=0)
+h=my_module.Cluster(XX,algo,x_l='Rental_Count',y_l='Time factor')
+
+
+from sklearn.cluster import AgglomerativeClustering
+algo = AgglomerativeClustering(n_clusters=3)
+h=my_module.Cluster(xX,algo,x_l='Rental_Count',y_l='Time factor')
