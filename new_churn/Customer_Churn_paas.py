@@ -72,12 +72,12 @@ b=df[df['segment']=='q2']
 c=df[df['segment']=='q3']   
 d=df[df['segment']=='q4'] 
 
-
+"""
 A=a.groupby('Country')['sum'].agg('sum')
 B=b.groupby('Country')['sum'].agg('sum')
 C=c.groupby('Country')['sum'].agg('sum')
 D=d.groupby('Country')['sum'].agg('sum')
-
+"""
 
 FD=pd.read_csv('/Users/lukishyadav/Desktop/Gittable_Work/Bargain_Hunters/RentalswithandwithoutPromoCodes_2019-6-28_1238.csv')
 
@@ -122,12 +122,12 @@ C=pd.merge(c[['customer_id']],FD,on='customer_id',how='inner')
 
 D=pd.merge(d[['customer_id']],FD,on='customer_id',how='inner')   
 
-
+"""
 AA=A.groupby('day')['Fare'].agg('sum').reset_index(name='sum')
 BB=B.groupby('day')['Fare'].agg('sum').reset_index(name='sum')
 CC=C.groupby('day')['Fare'].agg('sum').reset_index(name='sum')
 DD=D.groupby('day')['Fare'].agg('sum').reset_index(name='sum')
-
+"""
 
 
 
@@ -149,4 +149,44 @@ plt.plot(DD['sum'],label='q4')
 plt.legend()
 plt.show()  
 
+
+dlr=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/Daysfromlastrental_modified_2019-8-13_1806.csv')
+
+fmt = '%Y-%m-%d %H:%M:%S'
+then = datetime.strptime('2019-08-13 20:59:59', fmt)
+
+
+dlr.columns
+
+
+dlr['Day of last rental '].iloc[1][0:19]
+
+
+dlr.dropna(inplace=True)
+
+dlr['Day of last rental ']=dlr['Day of last rental '].apply(lambda x:datetime.strptime(x[0:19], fmt))
+
+
+dlr['Day of last rental ']=dlr['Day of last rental '].apply(lambda x:then-x)
+
+
+dlr['Day of last rental ']=pd.to_timedelta(dlr['Day of last rental '])
+
+def convert(x):
+    return x.total_seconds()/(3600*24)
+
+dlr['d_f_l_r']=dlr['Day of last rental '].apply(convert)
+
+
+df
+
+
+churn=pd.merge(df,dlr,on='customer_id',how='inner')
+
+churn['churned']=churn['d_f_l_r'].apply(lambda x:1 if x>60 else 0)
+
+
+churn_group=churn.groupby('segment')['d_f_l_r'].agg('mean').reset_index(name='Average')
+
+churn_group=churn.groupby('segment')['churned'].agg('sum').reset_index(name='Churned')
 

@@ -20,35 +20,31 @@ from sklearn.cluster import DBSCAN
 from bokeh.models.widgets import Button, RadioButtonGroup, Select, Slider,TextInput
 from bokeh.palettes import Category20
 
+
 """
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
 from datetime import datetime
 df['Day']=df['date'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M:%S'))
-
+#DF['Date']=DF['Date'].apply(lambda x:datetime.strptime(x,'%Y-%m-%d %H:%M:%S'))
 fd=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/last7days.csv')
-
 fd['Day']=fd['time'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M'))
 DF=pd.merge(df,fd,on='Day',how='inner')
 FD=DF.groupby(['day']).sum(name='Counts')
 """
 
-
 #df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/supply_demand_counts_20190501_20190606.csv')
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
-
-
 DF=df.tail(1300).copy()
-
 DF=df.copy()
-
 #plt.plot(DF['Rental_Count'])
 import datetime
-
 DF['day']=DF['date'].apply(lambda x:datetime.datetime.strptime(x[0:10],'%Y-%m-%d'))
-
-
 FD=DF.groupby(['day']).sum(name='Counts')
+data=FD['counts']
+data=data.to_frame()
 
+data=FD['counts']
+data=data.to_frame()
 
 #import pandas
 #import matplotlib.pyplot as plt
@@ -166,10 +162,36 @@ def fit_lstm(train, n_lag, n_seq, n_batch, nb_epoch, n_neurons):
 		model.reset_states()
 	return model  
 
+# fit an LSTM network to training data
+def fit_lstm2(train, n_lag, n_seq, n_batch, nb_epoch, n_neurons):
+	# reshape training into [samples, timesteps, features]
+	X, y = train[:, 0:n_lag], train[:, n_lag:]
+	X = X.reshape(X.shape[0],X.shape[1],1)
+	# design network
+	model = Sequential()
+	model.add(LSTM(n_neurons, batch_input_shape=(n_batch, X.shape[1], X.shape[2]), stateful=True))
+	model.add(Dense(y.shape[1]))
+	model.compile(loss='mean_squared_error', optimizer='adam')
+	# fit network
+	for i in range(nb_epoch):
+		model.fit(X, y, epochs=1, batch_size=n_batch, verbose=1, shuffle=False)
+		model.reset_states()
+	return model  
+
+
 # make one forecast with an LSTM,
 def forecast_lstm(model, X, n_batch):
 	# reshape input pattern to [samples, timesteps, features]
 	X = X.reshape(1, 1, len(X))
+	# make forecast
+	forecast = model.predict(X, batch_size=n_batch)
+	# convert to array
+	return [x for x in forecast[0, :]]
+
+# make one forecast with an LSTM,
+def forecast_lstm2(model, X, n_batch):
+	# reshape input pattern to [samples, timesteps, features]
+	X = X.reshape(1,len(X),1)
 	# make forecast
 	forecast = model.predict(X, batch_size=n_batch)
 	# convert to array
@@ -185,6 +207,36 @@ def make_forecasts(model, n_batch, train, test, n_lag, n_seq):
 		# store the forecast
 		forecasts.append(forecast)
 	return forecasts
+
+# evaluate the persistence model
+def make_forecasts2(model, n_batch, train, test, n_lag, n_seq):
+	forecasts = list()
+	for i in range(len(test)):
+		X, y = test[i, 0:n_lag], test[i, n_lag:]
+		# make forecast
+		forecast = forecast_lstm2(model, X, n_batch)
+		# store the forecast
+		forecasts.append(forecast)
+	return forecasts
+
+"""
+
+Predict Unseen
+
+"""
+
+
+# evaluate the persistence model
+def make_unseen_forecasts(model, n_batch, series, n_lag, n_seq):
+	forecasts = list()
+	#for i in range(len(test)):
+	#X, y = test[-1, 0:n_lag], test[-1, n_lag:]
+	X=series.values[-3:]
+    
+	X=X.reshape(1,X.shape[0],X.shape[1])
+	forecast = model.predict(X, batch_size=n_batch)
+	#forecasts.append(forecast)
+	return forecast
 
 
 
@@ -258,10 +310,10 @@ from numpy import array
 
 series=FD['counts'].to_frame()
 
-n_lag = 2
+n_lag = 3
 n_seq = 7
 n_test = 10
-n_epochs = 500
+n_epochs = 50
 n_batch = 1
 n_neurons = 20
 # prepare data
@@ -269,18 +321,25 @@ scaler,train, test = prepare_data(series, n_test, n_lag, n_seq)
 # fit model
 model = fit_lstm(train, n_lag, n_seq, n_batch, n_epochs, n_neurons)
 
+model = fit_lstm2(train, n_lag, n_seq, n_batch, n_epochs, n_neurons)
+
 
 print(model.summary())
 
 
 # make forecasts
-forecasts = make_forecasts(model, n_batch, train, test, n_lag, n_seq)
+forecasts = make_forecasts2(model, n_batch, train, test, n_lag, n_seq)
 # inverse transform forecasts and test
 forecasts = inverse_transform(series, forecasts, scaler, n_test+2)
 actual = [row[n_lag:] for row in test]
 actual = inverse_transform(series, actual, scaler, n_test+2)
 # evaluate forecasts
-evaluate_forecasts(actual, forecasts, n_lag, n_seq)
+evaluate_forecasts(actual, forecasts,s n_lag, n_seq)
 # plot forecasts
 %matplotlib auto
 plot_forecasts(series, forecasts, n_test+2)
+
+
+predictions=make_unseen_forecasts(model, n_batch, series, n_lag, n_seq)
+
+outputs=scaler.inverse_transform(predictions)

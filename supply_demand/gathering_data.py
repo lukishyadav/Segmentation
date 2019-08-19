@@ -5,7 +5,7 @@ Created on Thu Aug  1 16:14:34 2019
 
 @author: lukishyadav
 """
-
+"""
 
 lat_centerish: 37.8598115
 lng_centerish: -122.28253
@@ -21,6 +21,30 @@ D=json.loads(r.text)
 
 m=list(range(25,32))
 
+import datetime
+MM=str(datetime.datetime.now())
+
+"""
+import datetime as DT
+today = DT.date.today()
+week_ago = today - DT.timedelta(days=7)
+
+'
+"""
+
+Decision to whether consider present day along with last 7 days or not 
+
+
+"""
+
+
+m=[]
+for v in range(0,8):
+    dday = int(str(today - DT.timedelta(days=v))[8:10])
+    m.append(dday)
+
+
+monyear=  str(today - DT.timedelta(days=v))[0:7]  
 
 import requests
 import json
@@ -29,7 +53,7 @@ y=0
 for x in m:
     
 
-    payload = {'key': '8a2ea49d9a454d5bb14115114193107', 'q': '37.864197,-122.26588','dt':'2019-07-'+str(x)}
+    payload = {'key': '8a2ea49d9a454d5bb14115114193107', 'q': '37.864197,-122.26588','dt':monyear+'-'+str(x)}
     r = requests.get('http://api.apixu.com/v1/history.json', params=payload)
     D=json.loads(r.text)
     
@@ -54,9 +78,10 @@ for x in m:
 
 
 
-bigdata.to_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/last7days.csv',index=False)
+bigdata.to_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/data/'+str(today)+'last7days.csv',index=False)
 #len(LL)
 
+DDD=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/data/'+str(today)+'last7days.csv')
 
 
 

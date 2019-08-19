@@ -42,6 +42,23 @@ fd['Day']=fd['time'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M'))
 DF=pd.merge(df,fd,on='Day',how='inner')
 
 
+FD=DF.groupby(['day']).sum(name='Counts')
+
+
+#import pandas
+#import matplotlib.pyplot as plt
+
+#plt.plot(DF['Supply_Count'])
+
+['Unnamed: 0', 'Date', 'Appopen_Count', 'Supply_Count', 'Rental_Count',
+       'hour']
+
+
+data=DF['counts']
+
+data=FD['counts']
+
+
 from pandas import DataFrame
 from pandas import concat
 from pandas import read_csv

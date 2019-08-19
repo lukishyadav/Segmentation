@@ -32,6 +32,9 @@ df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/supply_dem
 
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
 
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8.csv')
+
+
 
 DF=df.copy()
 
@@ -55,7 +58,8 @@ data=DF['counts']
 
 data=FD['counts']
 
-
+data=df['counts'].tail(320)
+data=data[0:-1]
 
 #divide into train and validation set
 train = data[:int(0.67*(len(data)))]
