@@ -6,6 +6,13 @@ Created on Fri Jun 28 11:23:03 2019
 @author: lukishyadav
 """
 
+import sys
+# insert at 1, 0 is the script path (or '' in REPL)
+sys.path.insert(1, '/Users/lukishyadav/Desktop/Segmentation/')
+
+import my_module
+
+
 import pandas as pd
 import numpy as np
 import my_module
@@ -97,8 +104,9 @@ xX=M.transform(X)
  
 from sklearn.cluster import KMeans
 algo=KMeans(n_clusters=6, random_state=0)
-h=my_module.Cluster(xX,algo,x_l='Average Coupon_to_pocket',y_l='Average Fare')
+h,km=my_module.Cluster(xX,algo,x_l='Average Coupon_to_pocket',y_l='Average Fare')
 
+km.cluster_centers_
 
 
 List=list(h)
@@ -113,7 +121,7 @@ LIST[1]
 LIST[0]
 
 
-M.transform([[0.1,42]])
+M.inverse_transform([[0.7,0.4]])
 
 
 

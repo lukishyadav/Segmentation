@@ -122,6 +122,31 @@ df.set_index('date',inplace=True)
         
         
 data=df['counts'].tail(480)
+
+Value=data.index[0]
+
+from datetime import datetime, timedelta
+Pdates=[]
+for y in range(1,480):
+ Pdates.append(datetime.strptime(Value,'%Y-%m-%d %H:%M:%S')+timedelta(hours=y))
+
+CC=[0 for i in range(len(Pdates))]
+
+adates=pd.DataFrame({'date':Pdates,'c':CC}) 
+
+data=data.to_frame()
+
+data.reset_index(inplace=True)
+
+adates['date']=adates['date'].astype('str')
+
+actual_data=pd.merge(data,adates,how='right',on='date')
+actual_data['counts'].fillna(0,inplace=True)
+
+
+actual_data.set_index('date',inplace=True)
+data=actual_data['counts']
+
 data=data[0:-1]
 #data=data.to_frame()
 
@@ -735,13 +760,31 @@ FDD.to_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/19aug_8_2
  
 FDD['date']=FDD['date'].astype(str)
 
-pf=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8_late.csv')
+FDD=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/19aug_8_24hrs_predictions.csv')
+
+pf=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8_done.csv')
 
 
-OO=pd.merge(pf,FDD,on='date',how='inner')
+OO=pd.merge(pf,FDD,on='date',how='right')
+
+OO.fillna(0,inplace=True)
+
+OOO=OO.sort_values(by=['date'])
+OOO.reset_index(inplace=True)
+OOO.drop(['index'],axis=1,inplace=True)
+OOO.reset_index(inplace=True)
+
+%matplotlib auto
+import matplotlib.pyplot as plt
+plt.scatter(OOO.index,OOO.counts,label='actual')
+plt.scatter(OOO.index,OOO.p_demand,label='predicted')
+plt.legend()
 
 
-   
+
+
+
+
 """
 
 Correct Inverse Differencing
