@@ -61,6 +61,49 @@ data=FD['counts']
 data=df['counts'].tail(320)
 data=data[0:-1]
 
+
+
+
+"""
+For hourly data
+"""
+df.set_index('date',inplace=True)
+        
+        
+data=df['counts'].tail(480)
+
+Value=data.index[0]
+
+from datetime import datetime, timedelta
+Pdates=[]
+for y in range(1,480):
+ Pdates.append(datetime.strptime(Value,'%Y-%m-%d %H:%M:%S')+timedelta(hours=y))
+
+CC=[0 for i in range(len(Pdates))]
+
+adates=pd.DataFrame({'date':Pdates,'c':CC}) 
+
+data=data.to_frame()
+
+data.reset_index(inplace=True)
+
+adates['date']=adates['date'].astype('str')
+
+actual_data=pd.merge(data,adates,how='right',on='date')
+actual_data['counts'].fillna(1,inplace=True)
+
+
+actual_data.set_index('date',inplace=True)
+data=actual_data['counts'].to_frame()
+
+data=data.sort_values(by=['date'])
+
+
+data=data[0:-1]
+
+
+
+
 #divide into train and validation set
 train = data[:int(0.67*(len(data)))]
 valid = data[int(0.67*(len(data))):]
@@ -68,6 +111,8 @@ valid = data[int(0.67*(len(data))):]
 #plotting the data
 train.plot(label='Training Data',legend=True)
 valid.plot(label='Testing Data',legend=True)
+
+data.plot()
 
 import matplotlib.pyplot as plt
 plt.plot(train, label='Train')
@@ -85,6 +130,58 @@ model.fit(train)
 
 
 
+from pandas import Series
+from matplotlib import pyplot
+#series = Series.from_csv('daily-total-female-births.csv', header=0)
+# Tail-rolling average transform
+rolling = data.rolling(window=2)
+rolling_mean = rolling.mean()
+print(rolling_mean.head(10))
+
+
+%matplotlib auto
+pyplot.plot(data,label='original')
+pyplot.plot(rolling_mean,color='red',label='rolling mean')
+pyplot.legend()
+pyplot.show()
+
+
+
+
+model = auto_arima(train, trace=True, error_action='ignore', suppress_warnings=True)
+model.fit(rolling_mean)
+
+
+forecast = model.predict(n_periods=len(valid))
+forecast = pd.DataFrame(forecast,index = valid.index,columns=['Prediction'])
+
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+
+rmse = sqrt(mean_squared_error(valid, forecast))
+print('Test RMSE: %.3f' % rmse)
+
+
+"""
+Decomposing Trend, Seasonality and Residuals. 
+"""
+
+
+from random import randrange
+from pandas import Series
+from matplotlib import pyplot
+from statsmodels.tsa.seasonal import seasonal_decompose
+# =============================================================================
+# series = [i+randrange(10) for i in range(1,100)]
+# =============================================================================
+result = seasonal_decompose(data, model='multiplicative', freq=1)
+result.plot()
+pyplot.show()
+
+
+
+
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 
 

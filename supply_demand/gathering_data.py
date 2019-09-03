@@ -29,7 +29,7 @@ import datetime as DT
 today = DT.date.today()
 week_ago = today - DT.timedelta(days=7)
 
-'
+
 """
 
 Decision to whether consider present day along with last 7 days or not 
@@ -40,8 +40,8 @@ Decision to whether consider present day along with last 7 days or not
 
 m=[]
 for v in range(0,8):
-    dday = int(str(today - DT.timedelta(days=v))[8:10])
-    m.append(dday)
+        dday = int(str(today - DT.timedelta(days=v))[8:10])
+        m.append(dday)
 
 
 monyear=  str(today - DT.timedelta(days=v))[0:7]  

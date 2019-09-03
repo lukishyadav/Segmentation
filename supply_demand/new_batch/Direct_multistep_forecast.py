@@ -31,9 +31,10 @@ fd['Day']=fd['time'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M'))
 DF=pd.merge(df,fd,on='Day',how='inner')
 FD=DF.groupby(['day']).sum(name='Counts')
 """
-
 #df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/supply_demand_counts_20190501_20190606.csv')
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
+
+
 DF=df.tail(1300).copy()
 DF=df.copy()
 #plt.plot(DF['Rental_Count'])
@@ -42,22 +43,92 @@ DF['day']=DF['date'].apply(lambda x:datetime.datetime.strptime(x[0:10],'%Y-%m-%d
 FD=DF.groupby(['day']).sum(name='Counts')
 data=FD['counts']
 data=data.to_frame()
-
 data=FD['counts']
 data=data.to_frame()
-
 #import pandas
 #import matplotlib.pyplot as plt
-
 #plt.plot(DF['Supply_Count'])
-
 ['Unnamed: 0', 'Date', 'Appopen_Count', 'Supply_Count', 'Rental_Count',
        'hour']
-
-
 data=DF['counts']
-
 data=FD['counts']
+
+
+
+
+
+
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8.csv')
+DF=df.tail(1300).copy()
+DF=df.tail(1600).copy()
+DF=df.copy()
+#plt.plot(df['counts'].tail(160))
+import datetime
+DF['day']=DF['date'].apply(lambda x:datetime.datetime.strptime(x[0:10],'%Y-%m-%d'))
+FD=DF.groupby(['day']).sum(name='Counts')
+data=FD['counts']
+data=data.to_frame()
+data=FD['counts'].iloc[0:-1]
+
+"""
+import matplotlib.pyplot as plt
+plt.plot(data[-320:-1])
+
+df.tail(320)
+
+"""
+df.set_index('date',inplace=True)
+data=df['counts'].tail(480)
+Value=data.index[0]
+from datetime import datetime, timedelta
+Pdates=[]
+for y in range(1,480):
+ Pdates.append(datetime.strptime(Value,'%Y-%m-%d %H:%M:%S')+timedelta(hours=y))
+CC=[0 for i in range(len(Pdates))]
+adates=pd.DataFrame({'date':Pdates,'c':CC}) 
+data=data.to_frame()
+data.reset_index(inplace=True)
+adates['date']=adates['date'].astype('str')
+actual_data=pd.merge(data,adates,how='right',on='date')
+actual_data['counts'].fillna(-1,inplace=True)
+actual_data.set_index('date',inplace=True)
+data=actual_data['counts'].to_frame()
+
+data=data.sort_values(by=['date'])
+
+from matplotlib import pyplot as plt
+
+
+
+from pandas import Series
+from matplotlib import pyplot
+#series = Series.from_csv('daily-total-female-births.csv', header=0)
+# Tail-rolling average transform
+rolling = data.rolling(window=2)
+rolling_mean = rolling.mean()
+print(rolling_mean.head(10))
+# plot original and transformed dataset
+
+%matplotlib auto
+data.plot(label='original')
+rolling_mean.plot(color='red',label='rolling mean')
+pyplot.legend()
+pyplot.show()
+
+
+
+data=rolling_mean
+
+data.dropna(inplace=True)
+
+
+
+
+
+
+
+
+
 
 
 from pandas import DataFrame
@@ -177,6 +248,43 @@ def fit_lstm2(train, n_lag, n_seq, n_batch, nb_epoch, n_neurons):
 		model.fit(X, y, epochs=1, batch_size=n_batch, verbose=1, shuffle=False)
 		model.reset_states()
 	return model  
+
+
+def fit_lstm_main20(train,n_lag, n_seq, n_batch,nb_epoch,n_neurons,patience,loss):
+    X, y = train[:, 0:n_lag], train[:, n_lag:]
+    X = X.reshape(X.shape[0],X.shape[1],1)
+    model=Sequential()
+    model.add(LSTM(n_neurons,return_sequences=True,batch_input_shape=(n_batch, X.shape[1], X.shape[2]),dropout=0.2,stateful=True))
+    model.add(LSTM(2,input_shape=(X.shape[1],n_neurons)))
+    model.add(Dense(y.shape[1]))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+    M=0
+    N=0
+    MODEL=0
+    for i in range(nb_epoch):
+        print('Epoch'+' : '+str(i))
+        if i==0:
+           h=model.fit(X, y, epochs=1,validation_split=0.2, batch_size=n_batch, verbose=1, shuffle=False)
+           model.reset_states()
+           d=h.history 
+           M=d[loss]
+           MODEL=model
+           H=h
+        else:   
+           h=model.fit(X, y, epochs=1,validation_split=0.2, batch_size=n_batch, verbose=1, shuffle=False)
+           model.reset_states()
+           d=h.history
+           if d[loss]<M:
+              M=d[loss]
+              MODEL=model
+              H=h
+           else:
+              N=N+1
+        if N>patience:
+            break
+        
+    return MODEL,h,H    
+
 
 
 # make one forecast with an LSTM,
@@ -308,14 +416,18 @@ from numpy import array
 # =============================================================================
 
 
-series=FD['counts'].to_frame()
+#series=FD['counts'].to_frame()
+
+series=data
 
 n_lag = 3
-n_seq = 7
-n_test = 10
+n_seq = 24
+n_test = 24
 n_epochs = 50
 n_batch = 1
 n_neurons = 20
+patience=50
+loss='val_loss'
 # prepare data
 scaler,train, test = prepare_data(series, n_test, n_lag, n_seq)
 # fit model
@@ -324,6 +436,9 @@ model = fit_lstm(train, n_lag, n_seq, n_batch, n_epochs, n_neurons)
 model = fit_lstm2(train, n_lag, n_seq, n_batch, n_epochs, n_neurons)
 
 
+model,h,H=fit_lstm_main20(train, n_lag, n_seq, n_batch, n_epochs, n_neurons,patience,loss)
+
+H.history
 print(model.summary())
 
 
@@ -334,11 +449,16 @@ forecasts = inverse_transform(series, forecasts, scaler, n_test+2)
 actual = [row[n_lag:] for row in test]
 actual = inverse_transform(series, actual, scaler, n_test+2)
 # evaluate forecasts
-evaluate_forecasts(actual, forecasts,s n_lag, n_seq)
+evaluate_forecasts(actual, forecasts, n_lag, n_seq)
 # plot forecasts
 %matplotlib auto
 plot_forecasts(series, forecasts, n_test+2)
 
+from matplotlib import pyplot as plt
+plt.plot(series[-24:],label='original') 
+plt.plot(forecasts[0],label='predicted')
+plt.legend()
+#plt.plot(n_test+2)
 
 predictions=make_unseen_forecasts(model, n_batch, series, n_lag, n_seq)
 

@@ -6,7 +6,7 @@ Created on Mon Aug  5 14:31:12 2019
 @author: lukishyadav
 """
 
-import my_module
+#import my_module
 import pandas as pd
 
 
@@ -34,7 +34,7 @@ from datetime import datetime
 
 df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/TotalRevenueDarwin_2019-8-2_1514.csv')
 
-
+df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/TotalRevenueDarwin_2019-8-23_1242.csv')
 
 
 
@@ -80,6 +80,11 @@ D=d.groupby('Country')['sum'].agg('sum')
 """
 
 FD=pd.read_csv('/Users/lukishyadav/Desktop/Gittable_Work/Bargain_Hunters/RentalswithandwithoutPromoCodes_2019-6-28_1238.csv')
+
+FD=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/RentalswithandwithoutPromoCodes_2019-8-23_1245.csv')
+
+
+
 
 """
 'Rental ID', 'Rental Started (Pacific Time)', 'Customer ID', 'Fare',
@@ -152,8 +157,20 @@ plt.show()
 
 dlr=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/Daysfromlastrental_modified_2019-8-13_1806.csv')
 
+dlr=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/Churndayoflastrentalm19_modified_2019-8-22_1744.csv')
+
+
 fmt = '%Y-%m-%d %H:%M:%S'
-then = datetime.strptime('2019-08-13 20:59:59', fmt)
+
+then = datetime.strptime('2019-08-22 12:14:00', fmt)
+
+
+import datetime as DT
+today = DT.datetime.today()
+strtoday=str(today)
+
+
+then = datetime.strptime(strtoday[0:19], fmt)
 
 
 dlr.columns
@@ -178,7 +195,7 @@ def convert(x):
 dlr['d_f_l_r']=dlr['Day of last rental '].apply(convert)
 
 
-df
+#df
 
 
 churn=pd.merge(df,dlr,on='customer_id',how='inner')
@@ -189,4 +206,89 @@ churn['churned']=churn['d_f_l_r'].apply(lambda x:1 if x>60 else 0)
 churn_group=churn.groupby('segment')['d_f_l_r'].agg('mean').reset_index(name='Average')
 
 churn_group=churn.groupby('segment')['churned'].agg('sum').reset_index(name='Churned')
+
+
+
+dfr=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/Daysfromregistration_2019-8-22_1739.csv')
+
+dfr.columns=['customer_id','dfr']
+
+dfr['dfr']=pd.to_timedelta(dfr['dfr'])
+
+def convert(x):
+    return x.total_seconds()/(3600*24)
+
+dfr['d_f_r']=dfr['dfr'].apply(convert)
+
+
+
+
+MMain=pd.merge(dlr,dfr,on='customer_id',how='inner')
+
+MMain['Churn']=MMain['d_f_l_r'].apply(lambda x:1 if x>=60 else 0)
+
+MMain2=MMain[MMain['Churn']==1]
+
+MMain2['churn_time']=MMain2[['d_f_l_r','d_f_r']].apply(lambda x:x[1]-x[0],axis=1)
+
+MMain2['churn_time']=MMain2['churn_time'].apply(lambda x:0 if x<0 else x)
+
+
+
+
+MMain3=pd.merge(MMain2,df,on='customer_id',how='inner')
+
+
+MMain4=MMain3.groupby(['segment'])['churn_time'].agg('mean').reset_index(name='mean')
+
+
+MMain4.to_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/churn_time.csv',index=False)
+
+
+
+
+#Rentals=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/DarwinRentals_modified_2019-8-26_2242.csv')
+
+Rentals=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/dayoffirstrental_modified_2019-8-27_1739.csv')
+fmt = '%Y-%m-%d %H:%M:%S'
+then = datetime.strptime('2019-08-22 12:14:00', fmt)
+#import datetime as DT
+#today = DT.datetime.today()
+#strtoday=str(today)
+#then = datetime.strptime(strtoday[0:19], fmt)
+
+Rentals['Days of first rental'].iloc[1][0:19]
+Rentals.dropna(inplace=True)
+Rentals['Days of first rental']=Rentals['Days of first rental'].apply(lambda x:datetime.strptime(x[0:19], fmt))
+Rentals['Days of first rental']=Rentals['Days of first rental'].apply(lambda x:then-x)
+Rentals['Days of first rental']=pd.to_timedelta(Rentals['Days of first rental'])
+def convert(x):
+    return x.total_seconds()/(3600*24)
+Rentals['d_f_f_r']=Rentals['Days of first rental'].apply(convert)
+
+Rentals['Days from last rental']=Rentals['Days from last rental'].apply(lambda x:datetime.strptime(x[0:19], fmt))
+Rentals['Days from last rental']=Rentals['Days from last rental'].apply(lambda x:then-x)
+Rentals['Days from last rental']=pd.to_timedelta(Rentals['Days from last rental'])
+Rentals['d_f_l_r']=Rentals['Days from last rental'].apply(convert)
+
+
+
+CT=pd.merge(Rentals[['customer_id','d_f_f_r','d_f_l_r']],df,on='customer_id',how='inner')
+
+CT['Churn']=CT['d_f_l_r'].apply(lambda x:1 if x>=60 else 0)
+
+CT2=CT[CT['Churn']==1]
+
+
+CT2['churn_time']=CT2[['d_f_l_r','d_f_f_r']].apply(lambda x:x[1]-x[0],axis=1)
+
+CT2['churn_time']=CT2['churn_time'].apply(lambda x:0 if x<0 else x)
+
+
+CT3=pd.merge(CT2,df,on='customer_id',how='inner')
+
+CT4=CT3.groupby(['segment_x'])['churn_time'].agg('mean').reset_index(name='mean')
+
+
+CT4.to_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/data/churn_time2.csv',index=False)
 

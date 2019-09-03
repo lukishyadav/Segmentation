@@ -6,7 +6,7 @@ Created on Fri Aug  2 15:33:13 2019
 @author: lukishyadav
 """
 
-import my_module
+#import my_module
 import pandas as pd
 
 
@@ -34,6 +34,7 @@ from datetime import datetime
 
 
 
+
 #df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/new_churn/TotalRevenueDarwin_2019-8-2_1514.csv')
 
 
@@ -41,6 +42,9 @@ from datetime import datetime
 
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/DarwinRentals_modified_2019-8-5_1347.csv')
 
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/DarwinRentals_2019-8-19_1506.csv')
+
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/DarwinRentals_2019-8-20_1022.csv')
 
 
 
@@ -136,6 +140,8 @@ fmt = '%Y-%m-%d %H:%M:%S'
 FMT='%Y-%m-%d %H'
 
 
+from datetime import datetime
+
 df['date']=df['start time'].apply(lambda x:datetime.strptime(x[0:13], FMT))
 
 df['start time']=df['start time'].apply(lambda x:datetime.strptime(x[0:19], fmt))
@@ -148,7 +154,7 @@ DF = df[(df['q'] == Q) & (df['r'] == R)]
 DD=DF.groupby('date').size().reset_index(name='counts')
 
 
-DD.to_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv',index=False)
+DD.to_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8_done.csv',index=False)
 
 
 #DF['hour']=DF['Date'].apply(lambda x:x.hour)

@@ -61,55 +61,17 @@ import numpy
 
 #df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/supply_demand_counts_20190501_20190606.csv')
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
-
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8.csv')
-
-
 DF=df.tail(1300).copy()
-
 DF=df.tail(1600).copy()
-
-
-
 DF=df.copy()
-
 #plt.plot(df['counts'].tail(160))
 import datetime
-
 DF['day']=DF['date'].apply(lambda x:datetime.datetime.strptime(x[0:10],'%Y-%m-%d'))
-
-
 FD=DF.groupby(['day']).sum(name='Counts')
-
 data=FD['counts']
-
-
 data=data.to_frame()
-
-
-# =============================================================================
-# from matplotlib import pyplot as plt
-# plt.plot(FD['counts'])
-# 
-# =============================================================================
-
-
-# =============================================================================
-#for x in range(5, 0, -1):
-#    print(x)
-# 
-# =============================================================================
-
-#check = [DF['counts'].head(5).shift(i) for i in range(1, 3)]
-
-#DF['date'].iloc[1]
-
-
-#data=DF['counts']
-
-
 data=FD['counts'].iloc[0:-1]
-
 
 """
 import matplotlib.pyplot as plt
@@ -119,41 +81,57 @@ df.tail(320)
 
 """
 df.set_index('date',inplace=True)
-        
-        
 data=df['counts'].tail(480)
-
 Value=data.index[0]
-
 from datetime import datetime, timedelta
 Pdates=[]
 for y in range(1,480):
  Pdates.append(datetime.strptime(Value,'%Y-%m-%d %H:%M:%S')+timedelta(hours=y))
-
 CC=[0 for i in range(len(Pdates))]
-
 adates=pd.DataFrame({'date':Pdates,'c':CC}) 
-
 data=data.to_frame()
-
 data.reset_index(inplace=True)
-
 adates['date']=adates['date'].astype('str')
-
 actual_data=pd.merge(data,adates,how='right',on='date')
-actual_data['counts'].fillna(0,inplace=True)
-
-
+actual_data['counts'].fillna(-1,inplace=True)
 actual_data.set_index('date',inplace=True)
-data=actual_data['counts']
+data=actual_data['counts'].to_frame()
 
-data=data[0:-1]
+data=data.sort_values(by=['date'])
+
+#data=data.values
 #data=data.to_frame()
 
 #data=diff_values
 
 #data=data.values
 
+"""
+Rolling Mean Smoothing
+"""
+
+from pandas import Series
+from matplotlib import pyplot
+#series = Series.from_csv('daily-total-female-births.csv', header=0)
+# Tail-rolling average transform
+rolling = data.rolling(window=2)
+rolling_mean = rolling.mean()
+print(rolling_mean.head(10))
+# plot original and transformed dataset
+
+%matplotlib auto
+data.plot(label='original')
+rolling_mean.plot(color='red',label='rolling mean')
+pyplot.legend()
+pyplot.show()
+
+
+
+data=rolling_mean
+
+data.dropna(inplace=True)
+
+#data=data[0:-1]
 
 
 # date-time parsing function for loading the dataset
@@ -177,6 +155,14 @@ def timeseries_to_supervised2(data, lag=1):
 	columns.append(df)
 	df = concat(columns, axis=1)
 	df.dropna(inplace=True)
+	return df
+
+def timeseries_to_supervised3(data, lag=1):
+	df = DataFrame(data)
+	columns = [df.shift(i) for i in range(lag,0,-1)]
+	columns.append(df)
+	df = concat(columns, axis=1)
+	#df.dropna(inplace=True)
 	return df
 
 # create a differenced series
@@ -362,6 +348,42 @@ def fit_lstm_main20(train,batch_size,nb_epoch,neurons,patience,loss):
 
 
 
+def fit_lstm_main200(train,batch_size,nb_epoch,neurons,patience,loss):
+    X,y=train[:,0:-1],train[:,-1]
+    X=X.reshape(X.shape[0],X.shape[1],1)
+    model=Sequential()
+    model.add(LSTM(neurons,return_sequences=True,batch_input_shape=(batch_size, X.shape[1], X.shape[2]),dropout=0.2,stateful=True))
+    model.add(LSTM(neurons,input_shape=(X.shape[1],neurons)))
+    model.add(Dense(1))
+    model.compile(loss='mean_squared_error', optimizer='adam')
+    M=0
+    N=0
+    MODEL=0
+    for i in range(nb_epoch):
+        print('Epoch'+' : '+str(i))
+        if i==0:
+           h=model.fit(X, y, epochs=1,validation_split=0.2, batch_size=batch_size, verbose=1, shuffle=False)
+           model.reset_states()
+           d=h.history 
+           M=d[loss]
+           MODEL=model
+           H=h
+        else:   
+           h=model.fit(X, y, epochs=1,validation_split=0.2, batch_size=batch_size, verbose=1, shuffle=False)
+           model.reset_states()
+           d=h.history
+           if d[loss]<M:
+              M=d[loss]
+              MODEL=model
+              H=h
+           else:
+              N=N+1
+        if N>patience:
+            break
+        
+    return MODEL,h,H    
+
+
 
 def fit_lstm_main3(train,batch_size,nb_epoch,neurons,patience,loss):
     X,y=train[:,0:-1],train[:,-1]
@@ -493,52 +515,44 @@ def forecast_lstm(model, batch_size, X):
 # load dataset
 #series = read_csv('shampoo-sales.csv', header=0, parse_dates=[0], index_col=0, squeeze=True, date_parser=parser)
 
-lag=3
+lag=2
 series=data
-
 DATA=data.copy()
+#DATA=DATA.to_frame()
+
 
 #DATA=DATA.to_frame()
 
-DATA=DATA.to_frame()
 
 DATA.reset_index(inplace=True)
 #DATA['day']=DATA['day'].apply(lambda x :str(x)[0:10])
-
-
 dates=DATA.iloc[-24:,:1].values
-
 # transform data to be stationary
 raw_values = series.values
 diff_values = difference(raw_values, 1)
-
-
-
 #import matplotlib.pyplot as plt
 #plt.plot(diff_values)
-
 # transform data to be supervised learning
 #supervised = timeseries_to_supervised2(diff_values, lag)
 supervised = timeseries_to_supervised2(series, lag)
 supervised_values = supervised.values
-
 # split data into train and test-sets
 train, test = supervised_values[0:-24], supervised_values[-24:]
-
 # transform the scale of the data
 scaler, train_scaled, test_scaled = scale(train, test)
+"""
+np.argwhere(np.isnan(test_scaled))
+
+na_replace = np.vectorize(lambda x: -2 if np.isnan(x) else x)
+train_scaled=na_replace(train_scaled)
+test_scaled=na_replace(test_scaled)
+"""
 
 # fit the model
 #lstm_model = fit_lstm100(train_scaled, 1, 100, 100)
-
 #lstm_model = fit_lstm(train_scaled, 1, 100, 100)
-
-
 #lstm_model=fit_lstm_main(train_scaled, 1, 100, 100)
-
-
 lstm_model,h,es = fit_lstm5(train_scaled, 1, 1000, 100,'tanh',False,100,'mean_squared_error','adam',['mse'])
-
 C=h
 CC=h.history
 #  ['val_loss', 'val_mean_squared_error', 'loss', 'mean_squared_error']
@@ -556,11 +570,8 @@ plt.show()
 
 
 d=h.params
-
 epoch_value=es.stopped_epoch
-
 lstm_model = load_model('best_model.h5')
-
 lstm_model=load_model('/Users/lukishyadav/Desktop/Segmentation/supply_demand/saved_model/best_model.h5')
 # forecast the entire training dataset to build up state for forecasting
 train_reshaped = train_scaled[:, 0:lag].reshape(len(train_scaled), 1, lag)
@@ -643,7 +654,7 @@ plt.plot(test[:,-1])
 
 
 
-lstm_model,h,H=fit_lstm_main20(train_scaled, 1, 500, 100,60,'val_loss')
+lstm_model,h,H=fit_lstm_main200(train_scaled, 1, 500, 100,60,'val_loss')
 
 
 H.history
@@ -665,12 +676,12 @@ Yhat=TTTT[:, -1]
 #Yt=scaler.inverse_transform(y)
 
 epoch_value=000
-
+#raw_values=random_replace(raw_values)
 # report performance
 rmse = sqrt(mean_squared_error(raw_values[-24:], Yhat))
 print('Test RMSE: {0}, Early Stopp Epoch={1}'.format(rmse,epoch_value))
 # line plot of observed vs predicted
-%matplotlib inline
+%matplotlib auto
 pyplot.title(label='Test RMSE: %.3f' % rmse)
 pyplot.plot(raw_values[-24:],label='Test Data')
 pyplot.plot(Yhat,label='Predicted Data')
@@ -732,6 +743,12 @@ plt.legend()
 import matplotlib.pyplot as plt
 plt.plot(PPP,label='predicted')
 plt.plot(raw_values,label='original')
+plt.legend()
+
+%matplotlib auto
+import matplotlib.pyplot as plt
+plt.plot(output,label='predicted')
+plt.plot(raw_values[-24:],label='original')
 plt.legend()
 
 plt.plot(output)
