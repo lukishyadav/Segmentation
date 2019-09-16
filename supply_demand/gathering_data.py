@@ -39,9 +39,12 @@ Decision to whether consider present day along with last 7 days or not
 
 
 m=[]
+M=[]
 for v in range(0,8):
         dday = int(str(today - DT.timedelta(days=v))[8:10])
+        Dday = (str(today - DT.timedelta(days=v)))
         m.append(dday)
+        M.append(Dday)
 
 
 monyear=  str(today - DT.timedelta(days=v))[0:7]  
@@ -50,10 +53,11 @@ import requests
 import json
 
 y=0
-for x in m:
+for x in M:
     
 
-    payload = {'key': '8a2ea49d9a454d5bb14115114193107', 'q': '37.864197,-122.26588','dt':monyear+'-'+str(x)}
+    #payload = {'key': '8a2ea49d9a454d5bb14115114193107', 'q': '37.864197,-122.26588','dt':monyear+'-'+str(x)}
+    payload = {'key': '8a2ea49d9a454d5bb14115114193107', 'q': '37.864197,-122.26588','dt':x}
     r = requests.get('http://api.apixu.com/v1/history.json', params=payload)
     D=json.loads(r.text)
     

@@ -46,6 +46,10 @@ df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwi
 
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/DarwinRentals_2019-8-20_1022.csv')
 
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/DarwinRentals_modified_2019-9-12_1332.csv')
+
+
+
 
 
 df.isnull().sum()

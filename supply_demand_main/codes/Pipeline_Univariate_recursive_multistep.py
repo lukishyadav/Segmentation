@@ -58,7 +58,7 @@ import numpy
 #df=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/supply_demand_counts_20190501_20190606.csv')
 #df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
 #df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_90/hex_edge_24.911m_quantile_3_daily.csv')
-df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_180/hex_edge_1220.63m_quantile_1_daily.csv')
+df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_9999/hex_edge_8544.408m_all_hexes_hourly.csv')
 
 
 
@@ -70,8 +70,8 @@ LLL=[str(i) for i in range((LL-1))]
 df.columns=['date']+LLL
 
 key=len(LLL)-2
-key=0
-metric='daily'
+#key=0
+metric='hours'
 
 
 def convert(x):
@@ -292,7 +292,7 @@ if P==0:
  import matplotlib.pyplot as plt
  plt.plot(forecast,label='predicted')
  plt.plot(original[-N:].values,label='original')
- plt.plot(ensemble,label='esemble')
+ plt.plot(ensemble,label='ensemble')
  plt.plot(aa_forecast,label='AutoArima Forecast')
  plt.legend()
  plt.title('Rolling Mean Forecast.   P value:'+str(P))
@@ -802,7 +802,7 @@ def see_unseen(lag,series,P_value,metric,foreca):
     
     plt.plot(output,label='predicted')
     plt.plot(original[-N:].values,label='original')
-    plt.plot(ensemble,label='esemble')
+    plt.plot(ensemble,label='ensemble')
     plt.plot(aa_forecast,label='AutoArima Forecast')
     plt.legend()
     plt.title('LSTM forecast recursive multistep   P value:'+str(P_value))

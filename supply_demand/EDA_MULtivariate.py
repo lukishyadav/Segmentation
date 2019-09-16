@@ -8,7 +8,7 @@ Created on Mon Aug  5 16:04:00 2019
 
 
 
-import my_module
+#import my_module
 import pandas as pd
 
 
@@ -38,6 +38,11 @@ from datetime import datetime
 df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand/Darwin_Demand.csv')
 
 
+filename='/Users/lukishyadav/Desktop/Segmentation/supply_demand/data/Darwin_Demand_19_8_done.csv'
+
+df=pd.read_csv(filename)
+
+
 from datetime import datetime
 
 df['Day']=df['date'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M:%S'))
@@ -45,14 +50,44 @@ df['Day']=df['date'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M:%S
 
 #DF['Date']=DF['Date'].apply(lambda x:datetime.strptime(x,'%Y-%m-%d %H:%M:%S'))
 
+"""
+Aggregating files collected (lat 7 days forecasts) .
+
+"""
+
+dddate=[19,23,30]
+DDD=[]
+for i in range(len(dddate)):
+ DDD.append(pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/data/'+'2019-08-'+str(dddate[i])+'last7days.csv'))
 
 
+oc=pd.concat(DDD)
+
+oc.drop_duplicates(subset=['time'],inplace=True)
+
+
+oc['Day']=oc['time'].apply(lambda x:datetime.strptime(x[0:10],'%Y-%m-%d'))
+
+co=oc.groupby(['Day'])[['gust_kph','heatindex_c']].max()
+
+
+oc['Day']=oc['time'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M'))
+
+
+
+"""
 fd=pd.read_csv('/Users/lukishyadav/Desktop/segmentation/supply_demand/last7days.csv')
 
 fd['Day']=fd['time'].apply(lambda x:datetime.strptime(x[0:19],'%Y-%m-%d %H:%M'))
 
 
 DF=pd.merge(df,fd,on='Day',how='inner')
+
+"""
+
+DF=pd.merge(df,oc,on='Day',how='inner')
+
+
 
 """
 
@@ -66,9 +101,9 @@ DF=pd.merge(df,fd,on='Day',how='inner')
 
 """
 
-
 DD=DF.corr(method ='pearson')
 
+    
 
 DF.isnull().sum()
 
