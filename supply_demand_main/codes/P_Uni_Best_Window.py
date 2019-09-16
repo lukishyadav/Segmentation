@@ -62,9 +62,14 @@ from matplotlib import pyplot as plt
 #174.376,  461.355, 1220.63
 
 
-file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_30/hex_edge_461.355m_quantile_4_hourly.csv'
+file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_30/hex_edge_461.355m_quantile_3_hourly.csv'
 df=pd.read_csv(file)
 
+import re
+result = re.search('ge_(.*)_hourly', file)
+print(result.group(1))
+
+qua=result.group(1)
 
 store=df.columns
 mname=file[-35:-4]
@@ -78,7 +83,9 @@ df.columns=['date']+LLL
 
 key=len(LLL)-2
 key=0
-os.mkdir('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+store[key+1][1:-1])
+os.mkdir('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1])
+
+dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
 metric='hours'
 agg=6
 
@@ -349,7 +356,7 @@ for win in windows:
      plt.title('lat_lng:'+store[key+1][1:-1]+' P_Value: '+str(P))
      plt.xlabel('Progression in '+str(metric))
      plt.ylabel('Demand')
-     plt.savefig('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+store[key+1][1:-1]+'/Output_window'+str(win)+'.png')
+     plt.savefig(dpath+'/Output_window'+str(win)+'.png')
      plt.clf()
    
      
@@ -611,7 +618,7 @@ for win in windows:
         #plt.xlabel('Progression in '+str(metric))
         plt.xlabel('Progression in '+'quarter day')
         plt.ylabel('Demand')
-        plt.savefig('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+store[key+1][1:-1]+'/Output_window'+str(win)+'.png')
+        plt.savefig(dpath+'/Output_window'+str(win)+'.png')
         plt.clf()
         #return scaler,lstm_model
         """
@@ -652,7 +659,7 @@ plt.title('lat_lng:'+store[key+1][1:-1]+' P_Value: '+str(P))
 #plt.xlabel('Progression in '+str(metric))
 plt.xlabel('Progression in '+'quarter day')
 plt.ylabel('Demand')
-plt.savefig('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+store[key+1][1:-1]+'/Final_Output_window'+str(mkey)+'.png')
+plt.savefig(dpath+'/Final_Output_window'+str(mkey)+'.png')
 plt.clf()
 #return scaler,lstm_model
 
