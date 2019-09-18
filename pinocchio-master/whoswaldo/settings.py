@@ -1,0 +1,16 @@
+import yaml
+config = yaml.safe_load(open('config.yml').read())
+
+
+MIN_POSITIONS = config['MIN_CRITERIA']['POSITIONS']
+MIN_DURATION = config['MIN_CRITERIA']['DURATION']
+MIN_DISTANCE = config['MIN_CRITERIA']['DISTANCE']
+
+ANALYSIS_FEATURES = config['ANALYSIS']['FEATURES']
+ANALYSIS_NONSCORE_ROWS = config['ANALYSIS']['NONSCORE_ROWS']
+
+NSR_PERCENT_WALDO = config['WALDO']['PERCENT_NSR']
+SR = config['DESIGNATIONS']['SR']
+NSR = config['DESIGNATIONS']['NSR']
+
+SAMPLE_SIZE = config['ANALYSIS']['EVALUATION_SIZE']

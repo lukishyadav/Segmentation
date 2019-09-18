@@ -1,0 +1,27 @@
+MIN_CRITERIA:
+    POSITIONS: 2
+    DURATION: 300
+    DISTANCE: 1
+
+ANALYSIS:
+    NONSCORE_ROWS: 2
+    FEATURES:
+        - duration
+        - stdev-geometric-positions
+        - distance-traveled
+        - farthest-positions
+        - start-end-distance
+        - mean-weight
+        - stdev-weight
+        - class
+        - rental-id
+    EVALUATION_SIZE: 3
+
+WALDO:
+    PERCENT_NSR: 70
+
+DESIGNATIONS:
+    NSR: non-standard
+    SR: standard
+
+

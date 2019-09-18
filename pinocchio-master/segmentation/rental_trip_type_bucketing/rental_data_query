@@ -1,0 +1,25 @@
+SELECT "object_data-rental_id" as "rental_id",
+         "object_data-customer_id" as "customer_id",
+         "object_data-start_location_latitude" as "start_location_lat",
+         "object_data-start_location_longitude" as "start_location_lng",
+         "object_data-end_location_latitude" as "end_location_lat",
+         "object_data-end_location_longitude" as "end_location_lng"
+FROM "data_lake_us_prod"."sa_object_changed"
+WHERE tenant_id = 'darwin-prod'
+        AND name = 'RENTAL_LIFECYCLE'
+GROUP BY 
+    "object_data-rental_id",
+    "object_data-customer_id",
+    "object_data-start_location_latitude",
+    "object_data-start_location_longitude",
+    "object_data-end_location_latitude",
+    "object_data-end_location_longitude"
+HAVING "object_data-start_location_latitude" is NOT null
+        AND "object_data-start_location_longitude" is NOT null
+        AND "object_data-end_location_latitude" is NOT null
+        AND "object_data-end_location_longitude" is NOT null
+        AND length(split(cast("object_data-end_location_latitude" as varchar), '.')[2]) > 4
+        AND length(split(cast("object_data-end_location_longitude" as varchar), '.')[2]) > 4
+        AND length(split(cast("object_data-start_location_latitude" as varchar), '.')[2]) > 4
+        AND length(split(cast("object_data-start_location_longitude" as varchar), '.')[2]) > 4
+order by "object_data-rental_id", "object_data-customer_id"

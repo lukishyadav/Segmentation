@@ -1,0 +1,5 @@
+# this won't work on Windows because geopandas requires shapely which doesn't play nice
+
+bokeh
+geopandas
+sklearn

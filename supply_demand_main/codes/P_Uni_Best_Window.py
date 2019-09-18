@@ -82,7 +82,7 @@ LLL=[str(i) for i in range((LL-1))]
 df.columns=['date']+LLL
 
 key=len(LLL)-2
-key=0
+key=1
 os.mkdir('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1])
 
 dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/images/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
