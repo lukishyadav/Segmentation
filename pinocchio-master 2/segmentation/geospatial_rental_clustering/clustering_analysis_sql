@@ -1,0 +1,22 @@
+select 
+    carsharing_rental.id as "id", customer_id, 
+    start_datetime at time zone 'America/Los_Angeles' as "start_datetime",
+    end_datetime at time zone 'America/Los_Angeles' as "end_datetime",
+    start_location.lat as start_location_lat,
+    start_location.lng as start_location_lng,
+    end_location.lat as end_location_lat,
+    end_location.lng as end_location_lng
+from carsharing_rental
+join carsharing_payment on carsharing_rental.id = carsharing_payment.rental_id
+join common_payment on carsharing_payment.payment_ptr_id = common_payment.id
+join common_location as start_location on carsharing_rental.start_location_id = start_location.id
+join common_location as end_location on carsharing_rental.end_location_id = end_location.id
+join common_customer ON common_customer.id = carsharing_rental.customer_id
+join common_userprofile ON common_userprofile.id = common_customer.user_profile_id
+join auth_user ON auth_user.id = common_userprofile.user_id
+where end_datetime >= '2018-04-15'
+and common_payment.is_exempted is false
+and carsharing_rental.start_location_id is not null
+and carsharing_rental.end_location_id is not null
+and auth_user.email not like '%ecoservice%'
+and auth_user.email not like '%aaa%';

@@ -5,7 +5,8 @@ Created on Tue Sep 17 12:08:06 2019
 
 @author: lukishyadav
 """
-
+import time
+start_time=time.time()
 import sys
 # the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
 sys.path.append('/Users/lukishyadav/Desktop/segmentation/supply_demand_main/supply')
@@ -20,7 +21,7 @@ from settings import region
 from datetime import datetime
 
 
-VEHICLE_DATAFILE='supply.csv'
+VEHICLE_DATAFILE='supply_30.csv'
 miles_per_meter = 0.000621371
 
 
@@ -274,7 +275,7 @@ print(f'Extract time: {time.time() - extract_init_time}s')
 
 # merge the big dow/hour mask back with vehicle_update data
 supply_df = supply_df.merge(mi_df, left_index=True, right_index=True)
-supply_df.to_csv(f'{VEHICLE_DATAFILE.split(".")[0]}_with_datetime_mask.csv')   
+#supply_df.to_csv(f'{VEHICLE_DATAFILE.split(".")[0]}_with_datetime_mask.csv')   
 
 kd=supply_df.copy()
 kd.drop('index',axis=1,inplace=True)
@@ -298,15 +299,23 @@ alter=list(KD.columns)
 
 df2=pd.melt(kd,id_vars=unaltered,var_name='start_datetime', value_name='Minutes')
 
+
+df2=df2[df2['Minutes']!=0]
+
 df2.to_csv('Supply_Data.csv',index=False)
 
 #df2.to_csv('Supply_Data.csv',index=False,date_format='%Y-%m-%d %H')
 
 
+
+"""
 pd.date_range(supply_df['available_at'].iloc[1], supply_df['unavailable_at'].iloc[1], freq='H', closed='left')     
 
 
 datetime.strptime(str(x[0])[0:13], '%Y-%m-%d %H')
 
+"""
 
 
+
+print(f'Final Time: {time.time() - start_time}s')

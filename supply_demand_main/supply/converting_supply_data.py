@@ -38,6 +38,8 @@ raw_rental_datafile='supply_with_datetime_mask.csv'
 
 raw_rental_datafile='Supply_Data.csv'
 
+raw_rental_datafile='Supply_Data_reduced.csv'
+
 """
 df=pd.read_csv(raw_rental_datafile)
 
@@ -176,6 +178,7 @@ df_resolution_example = pd.DataFrame({"res" : list_res,
                                       "geometry": list_hex_res_geom 
                                      })
 df_resolution_example["hex_id_binary"] = df_resolution_example["hex_id"].apply(lambda x: bin(int(x,16))[2:])
+
 
 pd.set_option('display.max_colwidth',63)
 df_resolution_example.head()
@@ -395,6 +398,7 @@ import datetime
 # subtract timescale t from it, save to a list
 TIMESCALES = [30, 60, 90, 180, 9999]
 TIMESCALES=[5]
+TIMESCALES=[30]
  # days - last one is "all"
 cutoff_dates = [(raw_rental_df.start_date.max() - datetime.timedelta(x)) for x in TIMESCALES]
 
@@ -444,17 +448,28 @@ def transform_hex_dataset2(df_data, timeseries):
     grouping.extend(timeseries)
     
     #create a flag for minutes present for records
-    df_data['flag']=df_data['Minutes'].apply(lambda x:1 if x!=0 else 0)
+    #df_data['flag']=df_data['Minutes'].apply(lambda x:1 if x!=0 else 0)
     
+    if timeseries==['start_date', 'start_datetime_hour']:
+       hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum'}) 
+       hexgrouped_df['Minutes']=hexgrouped_df['Minutes'].apply(lambda x:float(x/60))
+    else:  
+        hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum'}) 
+        hexgrouped_df['Minutes']=hexgrouped_df['Minutes'].apply(lambda x:float(x/(60*24)))
+    
+    hexgrouped_df.reset_index(inplace=True) 
+    hexgrouped_df=hexgrouped_df.rename(columns = {"Minutes":0})
     # create a pivot table
     # index: timeseries
     # columns: hex_id and timeseries    
     #hexgrouped_df = df_data.groupby(grouping).size().to_frame().reset_index()
     
-    hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum','flag':'sum'})
-    hexgrouped_df[0]=hexgrouped_df.apply(lambda x:float(x['Minutes']/x['flag']),axis=1)
-    hexgrouped_df.reset_index(inplace=True)
-    hexgrouped_df.drop(columns=['Minutes','flag'],inplace=True)
+    #hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum','flag':'sum'})
+    
+    
+    #hexgrouped_df[0]=hexgrouped_df.apply(lambda x:float(x['Minutes']/x['flag']),axis=1)
+    #hexgrouped_df.reset_index(inplace=True)
+    #hexgrouped_df.drop(columns=['Minutes','flag'],inplace=True)
 
 
     timeindexed_hexgrouped_df = pd.pivot_table(
@@ -622,7 +637,7 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
                                                          breaks, ['start_date', 'start_datetime_hour'])
                     for k, sample_df in enumerate(samples):
                         # save the file and name the file
-                        # naming: 
+                        # naming:   
                         #   - edge length(m): df_meta.loc[res].edge_length_m
                         #   - break quantile number: k
                         #   - time granularity: daily vs hourly
@@ -641,7 +656,9 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
     
     
     
-    
+"""
+raw_rental_df.columns
+"""   
     
     
     

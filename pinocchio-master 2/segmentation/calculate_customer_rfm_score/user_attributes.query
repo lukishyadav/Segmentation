@@ -1,0 +1,52 @@
+ -- to get user_att.csv values
+select
+    customer_id,
+    sum(fare) as "revenue",
+    EXTRACT(epoch from now() - max(booked_at))as "seconds from last rental",
+    EXTRACT(epoch from now()- max(auth_user.date_joined)) as "seconds from registration",
+    sum(promotions_promotion.coupon_amount) as "promo amount",
+    sum(cp.credit_used_amount) as "total credits used",
+    count(distinct(carsharing_rental.id)) as rental_count,
+    case
+    	when common_customer.blocked_at is null then 'no'
+    	else 'yes'
+    end as "is_blocked?"
+
+    from carsharing_rental
+    join carsharing_payment csp on csp.rental_id = carsharing_rental.id
+    join common_payment cp on cp.id = csp.payment_ptr_id
+    join common_customer on carsharing_rental.customer_id = common_customer.id
+    join common_userprofile on common_customer.user_profile_id = common_userprofile.id
+    join auth_user on common_userprofile.user_id = auth_user.id
+    left join promotions_couponactivation pca on pca.user_id = auth_user.id
+    left join promotions_coupon on pca.coupon_id = promotions_coupon.id
+    left join promotions_promotion on promotions_coupon.promotion_id = promotions_promotion.id
+
+    where cp.is_exempted = False
+    and carsharing_rental.end_datetime is not null
+    group by customer_id, date_joined, blocked_at
+
+
+-- to get freq_btwn_rentals.csv values
+select customer_id, extract(epoch from avg(diff))
+    from (
+    select customer_id,
+    lag(start_datetime at time zone 'America/Los_Angeles') over
+    (partition by customer_id order
+    by carsharing_rental.end_datetime DESC ) - start_datetime at
+    time zone 'America/Los_Angeles' as "diff"
+    from carsharing_rental
+    join carsharing_payment csp on csp.rental_id = carsharing_rental.id
+    join common_payment cp on cp.id = csp.payment_ptr_id
+    join common_customer on carsharing_rental.customer_id = common_customer.id
+    join common_userprofile on common_customer.user_profile_id = common_userprofile.id
+    join auth_user on common_userprofile.user_id = auth_user.id
+    left join promotions_couponactivation pca on pca.user_id = auth_user.id
+    left join promotions_coupon on pca.coupon_id = promotions_coupon.id
+    left join promotions_promotion on promotions_coupon.promotion_id = promotions_promotion.id
+    where cp.is_exempted = False
+    and carsharing_rental.end_datetime is not null
+    ) as q
+group by customer_id
+having avg(diff) is not null
+and avg(diff) > '0 second' :: interval

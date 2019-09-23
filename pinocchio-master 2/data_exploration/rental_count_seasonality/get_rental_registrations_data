@@ -1,0 +1,54 @@
+with registrations as (
+    select 
+    -- edit the following line to change the time localization
+    cast(common_serviceregistration.completed_at at time zone 'America/Los_Angeles' as date) as Date, 
+    -- edit the above line to change the time localization
+    count(*) 
+    from common_serviceregistration
+    join common_customer on common_serviceregistration.customer_id = common_customer.id
+    join common_userprofile ON common_userprofile.id = common_customer.user_profile_id
+    join auth_user ON auth_user.id = common_userprofile.user_id
+    -- edit the following lines to filter for customer specific services
+    where auth_user.email not like '%ecoservice%'
+    and auth_user.email not like '%aaa%'
+    -- edit the above lines to filter for customer specific services
+    and auth_user.email not like '%ridecell%'
+    -- edit the following lines to change the time range
+    and common_serviceregistration.completed_at at time zone 'America/Los_Angeles' >= '2017-05-01'
+    and common_serviceregistration.completed_at at time zone 'America/Los_Angeles' < '2019-05-01'
+    -- edit the above lines to change the time range
+    -- edit the following line to change the time localization
+    group by cast(common_serviceregistration.completed_at at time zone 'America/Los_Angeles' as date)
+    -- edit the above line to change the time localization
+),
+rentals as (
+    select cast(carsharing_rental.booked_at at time zone 'America/Los_Angeles' as date) as Date,
+    count(carsharing_rental.booked_at)
+    from carsharing_rental
+    join carsharing_payment on carsharing_rental.id = carsharing_payment.rental_id
+    join common_payment on carsharing_payment.payment_ptr_id = common_payment.id
+    join common_location as start_location on carsharing_rental.start_location_id = start_location.id
+    join common_location as end_location on carsharing_rental.end_location_id = end_location.id
+    join common_customer ON common_customer.id = carsharing_rental.customer_id
+    join common_userprofile ON common_userprofile.id = common_customer.user_profile_id
+    join auth_user ON auth_user.id = common_userprofile.user_id
+    -- edit the following lines to change the time range
+    where booked_at >= '2017-05-01'
+    and booked_at < '2019-05-01'
+    -- edit the above lines to change the time range
+    -- edit the following lines to filter for time chunks
+    and extract(hour from booked_at at time zone 'America/Los_Angeles') >= 7
+    and extract(hour from booked_at at time zone 'America/Los_Angeles') <= 9  
+    -- edit the above lines to filter for time chunks
+    and common_payment.is_exempted is false
+    -- edit the following lines to filter for customer specific services
+    and auth_user.email not like '%ecoservice%'
+    and auth_user.email not like '%aaa%'
+    -- edit the above lines to filter for customer specific services
+    and auth_user.email not like '%ridecell%'
+    and carsharing_rental.end_datetime is not null
+    group by cast(carsharing_rental.booked_at at time zone 'America/Los_Angeles' as date))
+select rentals.Date, rentals.count as rentals_count, registrations.count as registrations_count
+from rentals
+join registrations on rentals.Date = registrations.Date
+order by rentals.Date;
