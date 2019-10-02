@@ -1,3 +1,7 @@
+import sys
+# the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
+sys.path.append('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply')
+sys.path.append('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply')
 import time
 import pytz
 import re 
@@ -40,7 +44,7 @@ raw_rental_datafile='Supply_Data.csv'
 
 raw_rental_datafile='Supply_Data_reduced.csv'
 
-raw_rental_datafile='Supply_Data.csv'
+raw_rental_datafile='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply/Supply_Data.csv'
 
 """
 df=pd.read_csv(raw_rental_datafile)
@@ -534,7 +538,9 @@ except FileExistsError:
     pass
 
 
+alpha=1
 
+RESOLUTIONS=[7,8,9]
 
 for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, timescales (then individual dfs)
     # make dir with quadrant label
@@ -570,7 +576,7 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
             hexbinned_df = assign_hex(df, res)
             
             # if fewer than 5 hexes in dataset, just log values
-            if len(hexbinned_counts.value) <= 5:  # 5 break groups min
+            if alpha==1:  # 5 break groups min
 
                 # daily aggr
                 timeindexed_hexgrouped_df = transform_hex_dataset2(hexbinned_df, ['start_date'])
@@ -606,58 +612,7 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
                 # change the columns to be lat_lng
                 out_df.to_csv(f'{timescale_subdir}/{filename}')
                         
-            else:
-                # run jenks on the binned counts
-                #   get the hex_ids of min, median, max, 3 randoms (or all if less than 6)
-                import jenkspy
-                # 
-                breaks = np.unique(np.array(jenkspy.jenks_breaks(hexbinned_counts.value, nb_class=5)))
-                # save the results to a csv
-                if breaks.size > 1:
-
-                    # daily breakdown
-                    samples = collect_sample_hex_dataset(hexbinned_df, hexbinned_counts, breaks, ['start_date'])
-                    for k, sample_df in enumerate(samples):
-                        # save the file and name the file
-                        # naming: 
-                        #   - edge length(m): df_meta.loc[res].edge_length_m
-                        #   - break quantile number: k
-                        #   - time granularity: daily vs hourly
-
-                        quantile_label = f'quantile_{k}'
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label] = {}
-
-                        filename = f'hex_edge_{df_meta.loc[res].edge_length_m}m_quantile_{k}_daily.csv'
-
-                        # change the columns to be lat_lng
-                        sample_df.columns = [str(h3.h3_to_geo(x)) for x in sample_df.columns]
-                        sample_df.to_csv(f'{timescale_subdir}/{filename}')
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label]['daily'] = sample_df
-
-                    # hourly breakdown
-                    samples = collect_sample_hex_dataset(hexbinned_df, hexbinned_counts,
-                                                         breaks, ['start_date', 'start_datetime_hour'])
-                    for k, sample_df in enumerate(samples):
-                        # save the file and name the file
-                        # naming:   
-                        #   - edge length(m): df_meta.loc[res].edge_length_m
-                        #   - break quantile number: k
-                        #   - time granularity: daily vs hourly
-                        filename = f'hex_edge_{df_meta.loc[res].edge_length_m}m_quantile_{k}_hourly.csv'
-                        quantile_label = f'quantile_{k}'
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label] = {}
-                        
-                        # change the columns to be lat_lng
-                        sample_df.columns = [str(h3.h3_to_geo(x)) for x in sample_df.columns]
-                        sample_df.to_csv(f'{timescale_subdir}/{filename}')
-                        
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label]['hourly'] = sample_df                    
-    
-    
-    
-    
-    
-    
+               
 """
 raw_rental_df.columns
 """   

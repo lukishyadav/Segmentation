@@ -1,7 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct  1 13:04:48 2019
+
+@author: lukishyadav
+"""
+import sys
+# the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
+sys.path.append('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand')
 import time
 import pytz
-import re 
-from datetime import datetime
+
 import pandas as pd
 import numpy as np
 
@@ -30,57 +39,23 @@ def set_bbox(df, lng_min, lat_min, lng_max, lat_max):
     df = df[(df['lng'] >= lng_min) & (df['lng'] <= lng_max)]
     return df
 
-
 # import the dataset
-raw_rental_datafile = 'darwin_rentals_time_loc_data_20180701_20190701.csv'
-
-raw_rental_datafile='supply_with_datetime_mask.csv'
-
-raw_rental_datafile='Supply_Data.csv'
-
-raw_rental_datafile='Supply_Data_reduced.csv'
-
-raw_rental_datafile='Supply_Data.csv'
-
-"""
-df=pd.read_csv(raw_rental_datafile)
-
+raw_rental_datafile = '/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/Demand_Counts.csv'
 raw_rental_df = pd.read_csv(
         raw_rental_datafile,
         parse_dates=['start_datetime'],
         infer_datetime_format=True
     ).dropna()
-"""
-
-raw_rental_df = pd.read_csv(
-        raw_rental_datafile,
-        infer_datetime_format=True
-    ).dropna()
-
 
 # remove extraneous datapoints
 raw_rental_df = set_bbox(raw_rental_df, selected_region['lng_min'], selected_region['lat_min'],
                          selected_region['lng_max'], selected_region['lat_max'])
 
-
-
-def convert(x):      
-    # Function to extract all the numbers from the given string 
-    def getNumbers(s): 
-        array = re.findall(r'[0-9]+', s) 
-        return array
-    E=getNumbers(x)
-
-    return datetime(int(E[0]),int(E[1]),int(E[2]),int(E[3]))
-
-raw_rental_df['start_datetime']=raw_rental_df['start_datetime'].apply(convert)
-    
 # perform all the extracts and data transformation prior to sorting dataset
 # extract the rental start dow/hour
 raw_rental_df['start_datetime_hour'] = raw_rental_df['start_datetime'].dt.hour
 raw_rental_df['start_datetime_dow'] = raw_rental_df['start_datetime'].dt.day_name()
 raw_rental_df['start_date'] = raw_rental_df['start_datetime'].dt.date
-
 
 quadrant_dataset = [
     set_bbox(raw_rental_df, selected_region['lng_center'], selected_region['lat_center'], selected_region['lng_max'], selected_region['lat_max']), # I
@@ -114,14 +89,11 @@ def draw_quadrants_map():
 
     return quadrants_map
 
-
-#from IPython.display import display
-#display(draw_quadrants_map())
-
-draw_quadrants_map().save("mymap.html")
+draw_quadrants_map()
 
 
 from h3 import h3
+
 max_res = 15
 list_hex_edge_km = []
 list_hex_edge_m = []
@@ -156,7 +128,6 @@ df_meta[["edge_length_km","perimeter_km","area_sqkm", "edge_length_m", "perimete
 
 
 
-
 lat_centr_point = selected_region['lat_center'] # -122.382202
 lon_centr_point = selected_region['lng_center'] # 37.855068
 list_hex_res = []
@@ -181,13 +152,11 @@ df_resolution_example = pd.DataFrame({"res" : list_res,
                                      })
 df_resolution_example["hex_id_binary"] = df_resolution_example["hex_id"].apply(lambda x: bin(int(x,16))[2:])
 
-
 pd.set_option('display.max_colwidth',63)
 df_resolution_example.head()
 
 
-
-HEX_RESOLUTIONS = [8, 9]
+HEX_RESOLUTIONS = [7, 8, 9]
 
 dataset_with_hex = [] # 2d array: quadrant, hex resolutions
 
@@ -206,7 +175,6 @@ for d in quadrant_dataset:
         d = assign_hex(df=d, resolution=h)
         interim_dataset.append(d)
     dataset_with_hex.append(interim_dataset)
-   
     
 # index data spatially by h3
 def counts_by_hexagon(df, resolution):
@@ -232,7 +200,7 @@ def counts_by_hexagon(df, resolution):
             }
         )
     
-    return df_aggreg    
+    return df_aggreg
 
 
 # vis with choropleth map
@@ -256,9 +224,6 @@ def hexagons_dataframe_to_geojson(df_hex, file_output = None):
             json.dump(feat_collection,f)
     
     return geojson_result
-
-
-
 
 
 import branca.colormap as cm
@@ -320,7 +285,8 @@ def choropleth_map(df_aggreg, border_color = 'black', fill_opacity = 0.7, initia
     return initial_map
 
 
-"""
+# test that the hexes are in quadrant that they were assigned
+# take datapoints in the top-left quadrant (quadrant 2)
 
 import folium
 
@@ -335,6 +301,7 @@ sanity_hex_map.save('sanity_hex_map.html')
 sanity_hex_map
 
 
+quad_2_res_8_datapoints.head()
 
 
 import folium
@@ -359,7 +326,6 @@ sanity_points_in_hex_map.save('sanity_points_in_hexes.html')
 sanity_points_in_hex_map
 
 
-
 import folium
 
 res_map_0_6 = draw_quadrants_map()
@@ -374,7 +340,6 @@ for x in range(0, 7):
 folium.map.LayerControl('bottomright', collapsed=False).add_to(res_map_0_6)
 res_map_0_6.save('choropleth_0_6.html')
 res_map_0_6
-
 
 
 import folium
@@ -392,16 +357,13 @@ folium.map.LayerControl('bottomright', collapsed=False).add_to(res_map_7_10)
 res_map_7_10.save('choropleth_7_10.html')
 res_map_7_10
 
-"""
 
 import datetime
 
 # get the max time
 # subtract timescale t from it, save to a list
-TIMESCALES = [30, 60, 90, 180, 9999]
-TIMESCALES=[5]
-TIMESCALES=[30]
- # days - last one is "all"
+TIMESCALES = [30, 60, 90, 180, 9999] # days - last one is "all"
+TIMESCALES = [30]
 cutoff_dates = [(raw_rental_df.start_date.max() - datetime.timedelta(x)) for x in TIMESCALES]
 
 dataset_with_timescale = [] # 3d array: quadrant, hex, timescale
@@ -412,10 +374,9 @@ for df in quadrant_dataset: # datasets in particular quadrants
     for date in cutoff_dates:
         interim_quad_dataset.append(df[df['start_date'] >= date])
     dataset_with_timescale.append(interim_quad_dataset)
-
-
-
-
+    
+    
+    
 # walk through 3d array all the way down
 # split via jenks natural breaks - collect min, max, mean, median, and 3 random sets
 # group by date, save to csv
@@ -444,49 +405,9 @@ def transform_hex_dataset(df_data, timeseries):
     return timeindexed_hexgrouped_df
 
 
-def transform_hex_dataset2(df_data, timeseries):
-    coords_col = ['hex_id']
-    grouping = ['hex_id']
-    grouping.extend(timeseries)
-    
-    #create a flag for minutes present for records
-    #df_data['flag']=df_data['Minutes'].apply(lambda x:1 if x!=0 else 0)
-    
-    if timeseries==['start_date', 'start_datetime_hour']:
-       hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum'}) 
-       hexgrouped_df['Minutes']=hexgrouped_df['Minutes'].apply(lambda x:float(x/60))
-    else:  
-        hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum'}) 
-        hexgrouped_df['Minutes']=hexgrouped_df['Minutes'].apply(lambda x:float(x/(60*24)))
-    
-    hexgrouped_df.reset_index(inplace=True) 
-    hexgrouped_df=hexgrouped_df.rename(columns = {"Minutes":0})
-    # create a pivot table
-    # index: timeseries
-    # columns: hex_id and timeseries    
-    #hexgrouped_df = df_data.groupby(grouping).size().to_frame().reset_index()
-    
-    #hexgrouped_df=df_data.groupby(grouping).agg({'Minutes':'sum','flag':'sum'})
-    
-    
-    #hexgrouped_df[0]=hexgrouped_df.apply(lambda x:float(x['Minutes']/x['flag']),axis=1)
-    #hexgrouped_df.reset_index(inplace=True)
-    #hexgrouped_df.drop(columns=['Minutes','flag'],inplace=True)
-
-
-    timeindexed_hexgrouped_df = pd.pivot_table(
-        hexgrouped_df,
-        values=0,
-        index=timeseries,
-        columns=coords_col)
-    timeindexed_hexgrouped_df.fillna(0, inplace=True)
-    
-    return timeindexed_hexgrouped_df
-
-
 def collect_sample_hex_dataset(df_data, df_counts, breaks, timeseries):
     # how to group - by hex_id and the time series we have (daily/hourly)
-    timeindexed_hexgrouped_df = transform_hex_dataset2(df_data, timeseries)
+    timeindexed_hexgrouped_df = transform_hex_dataset(df_data, timeseries)
 
     out_df_list = []
     
@@ -499,30 +420,30 @@ def collect_sample_hex_dataset(df_data, df_counts, breaks, timeseries):
                               data={'timeseries': timeindexed_hexgrouped_df.index.to_numpy()})
         
         # if fewer than 6 hexes in the break, just add all hexes to the df and output
-        if len(hexes) < 6:
-            out_df = out_df.join(
-                timeindexed_hexgrouped_df[hexes.hex_id].reset_index().drop(timeseries, axis=1))
-            out_df = out_df.set_index('timeseries')
-            out_df_list.append(out_df)
-        else:            
-            median_hex_id = hexes.iloc[int(len(hexes)/2)].hex_id  # median
-            max_hex_id = hexes.iloc[int(len(hexes))-1].hex_id # max
-            min_hex_id = hexes.iloc[0].hex_id # min
+#         if len(hexes) < 6:
+        out_df = out_df.join(
+            timeindexed_hexgrouped_df[hexes.hex_id].reset_index().drop(timeseries, axis=1))
+        out_df = out_df.set_index('timeseries')
+        out_df_list.append(out_df)
+#         else:            
+#             median_hex_id = hexes.iloc[int(len(hexes)/2)].hex_id  # median
+#             max_hex_id = hexes.iloc[int(len(hexes))-1].hex_id # max
+#             min_hex_id = hexes.iloc[0].hex_id # min
 
-            out_df = out_df.join(
-                timeindexed_hexgrouped_df[median_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
-            out_df = out_df.join(
-                timeindexed_hexgrouped_df[max_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
-            out_df = out_df.join(
-                timeindexed_hexgrouped_df[min_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
+#             out_df = out_df.join(
+#                 timeindexed_hexgrouped_df[median_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
+#             out_df = out_df.join(
+#                 timeindexed_hexgrouped_df[max_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
+#             out_df = out_df.join(
+#                 timeindexed_hexgrouped_df[min_hex_id].to_frame().reset_index().drop(timeseries, axis=1))
 
-            out_df = out_df.set_index('timeseries')
-            out_df_list.append(out_df)
+#             out_df = out_df.set_index('timeseries')
+#             out_df_list.append(out_df)
     return out_df_list
 
 
-
-RESOLUTIONS = list(range(max_res + 1))
+# RESOLUTIONS = list(range(max_res + 1))
+RESOLUTIONS = [7, 8, 9]
 parent_dir = 'darwin_rentals_time_loc_data_20180701_20190701_breakdown'
 
 in_mem_breakdown = {}
@@ -534,8 +455,7 @@ except FileExistsError:
     pass
 
 
-
-
+alpha=2
 for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, timescales (then individual dfs)
     # make dir with quadrant label
     quadrant_subdir = f'{parent_dir}/quadrant_{i}'
@@ -570,10 +490,10 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
             hexbinned_df = assign_hex(df, res)
             
             # if fewer than 5 hexes in dataset, just log values
-            if len(hexbinned_counts.value) <= 5:  # 5 break groups min
+            if alpha==2:  # 5 break groups min
 
                 # daily aggr
-                timeindexed_hexgrouped_df = transform_hex_dataset2(hexbinned_df, ['start_date'])
+                timeindexed_hexgrouped_df = transform_hex_dataset(hexbinned_df, ['start_date'])
                 out_df = pd.DataFrame(index=list(range(len(timeindexed_hexgrouped_df))),
                                       data={'timeseries': timeindexed_hexgrouped_df.index.to_numpy()})
                 for k, hexes in enumerate(timeindexed_hexgrouped_df.columns):
@@ -591,7 +511,7 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
                 
             
                 # hourly aggr
-                timeindexed_hexgrouped_df = transform_hex_dataset2(hexbinned_df, ['start_date', 'start_datetime_hour'])
+                timeindexed_hexgrouped_df = transform_hex_dataset(hexbinned_df, ['start_date', 'start_datetime_hour'])
                 out_df = pd.DataFrame(index=list(range(len(timeindexed_hexgrouped_df))),
                                       data={'timeseries': timeindexed_hexgrouped_df.index.to_numpy()})
                 for k, hexes in enumerate(timeindexed_hexgrouped_df.columns):
@@ -606,62 +526,4 @@ for i, timescales in enumerate(dataset_with_timescale): # df list: quadrants, ti
                 # change the columns to be lat_lng
                 out_df.to_csv(f'{timescale_subdir}/{filename}')
                         
-            else:
-                # run jenks on the binned counts
-                #   get the hex_ids of min, median, max, 3 randoms (or all if less than 6)
-                import jenkspy
-                # 
-                breaks = np.unique(np.array(jenkspy.jenks_breaks(hexbinned_counts.value, nb_class=5)))
-                # save the results to a csv
-                if breaks.size > 1:
-
-                    # daily breakdown
-                    samples = collect_sample_hex_dataset(hexbinned_df, hexbinned_counts, breaks, ['start_date'])
-                    for k, sample_df in enumerate(samples):
-                        # save the file and name the file
-                        # naming: 
-                        #   - edge length(m): df_meta.loc[res].edge_length_m
-                        #   - break quantile number: k
-                        #   - time granularity: daily vs hourly
-
-                        quantile_label = f'quantile_{k}'
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label] = {}
-
-                        filename = f'hex_edge_{df_meta.loc[res].edge_length_m}m_quantile_{k}_daily.csv'
-
-                        # change the columns to be lat_lng
-                        sample_df.columns = [str(h3.h3_to_geo(x)) for x in sample_df.columns]
-                        sample_df.to_csv(f'{timescale_subdir}/{filename}')
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label]['daily'] = sample_df
-
-                    # hourly breakdown
-                    samples = collect_sample_hex_dataset(hexbinned_df, hexbinned_counts,
-                                                         breaks, ['start_date', 'start_datetime_hour'])
-                    for k, sample_df in enumerate(samples):
-                        # save the file and name the file
-                        # naming:   
-                        #   - edge length(m): df_meta.loc[res].edge_length_m
-                        #   - break quantile number: k
-                        #   - time granularity: daily vs hourly
-                        filename = f'hex_edge_{df_meta.loc[res].edge_length_m}m_quantile_{k}_hourly.csv'
-                        quantile_label = f'quantile_{k}'
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label] = {}
-                        
-                        # change the columns to be lat_lng
-                        sample_df.columns = [str(h3.h3_to_geo(x)) for x in sample_df.columns]
-                        sample_df.to_csv(f'{timescale_subdir}/{filename}')
-                        
-                        in_mem_breakdown[quad_label][timescale_label][resolution_label][quantile_label]['hourly'] = sample_df                    
-    
-    
-    
-    
-    
-    
-"""
-raw_rental_df.columns
-"""   
-    
-    
-    
-    
+           

@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Sep 17 12:08:06 2019
-
-@author: lukishyadav
-"""
 import time
 start_time=time.time()
 import sys
@@ -34,7 +27,7 @@ mi = pd.MultiIndex.from_product([list(calendar.day_name), list(range(0, 24))], n
 
 
 
-     = pd.Series(index=mi).fillna(value=0)
+base_series = pd.Series(index=mi).fillna(value=0)
 
 mi_df = pd.DataFrame(columns=mi)
 supply_df = pd.DataFrame()
@@ -54,26 +47,33 @@ def convert_datetime_columns(df, columns):
             
 VEHICLE_DT_COLS = ['event_datetime']
 
+
+
+
+
+import dask as ddf
+
+import dask.dataframe as ddf
+
+#dd = ddf.read_csv('supply_latest.csv')
 print('Loading file...')
 read_init_time = time.time()
 
-# get df and clean up
-vehicle_df = pd.read_csv(
+vehicle_df=ddf.read_csv(
     VEHICLE_DATAFILE,
     parse_dates=VEHICLE_DT_COLS,
     infer_datetime_format=True
 ).dropna()
+
 print('Done loading file...')
 print(f'Took {int(time.time() - read_init_time)}s')
 
-
-#vehicle_df=vehicle_df.head(5000)
 
 vehicle_df = vehicle_df.rename(columns = {"vg": "vehicle_group_ids"})
 
 # Replacing reservation status by is_available
 
-vehicle_df['is_available']=vehicle_df['status'].apply(lambda x:True if x=='free' else False)
+vehicle_df['is_available']=vehicle_df['status'].apply(lambda x:True if x=='free' else False,meta=('x', bool))
 
 
 
@@ -94,24 +94,31 @@ print('Done converting datetime columns...')
 
 
 
+
+
+
 # change the strings into actual lists
-vehicle_df.vehicle_group_ids = vehicle_df.vehicle_group_ids.apply(eval)
+#vehicle_df['vehicle_group_ids'] = vehicle_df['vehicle_group_ids'].map_partitions(eval,meta=pd.Series).compute()
 # split into multiple columns that track if the vehicle_group_ids contains a public vehicle group id
 PUBLIC_VEHICLE_GROUPS = [2, 10, 21, 22]
 vehicle_df['in_public_group'] = vehicle_df.vehicle_group_ids.apply(
-    lambda x: False if pd.Index(x).join(pd.Index(PUBLIC_VEHICLE_GROUPS), how='inner').empty else True)
+    lambda x: False if pd.Index(eval(x)).join(pd.Index(PUBLIC_VEHICLE_GROUPS), how='inner').empty else True,meta=('x', bool))
 
 
+"""
 
+#vehicle_df2 = vehicle_df.compute()
+c=time.time()
+vehicle_df['event_datetime'].head(1)
+print(time.time()-c)
 
+FD=str(vehicle_df.loc[[0],['event_datetime']])
+LD=str(vehicle_df['event_datetime'].loc[-1])
+"""
 
+FD='2019-05-31 00'
 
-
-
-
-
-FD=str(vehicle_df['event_datetime'].iloc[0])
-LD=str(vehicle_df['event_datetime'].iloc[-1])
+LD='2019-06-30 23'
 
 FD = datetime.strptime(FD[0:13], '%Y-%m-%d %H')
 LD = datetime.strptime(LD[0:13], '%Y-%m-%d %H')
@@ -128,6 +135,7 @@ DL=list(pd.date_range(FD, LD, freq='H'))
 
 # group by vin
 vehicle_df_vin_grouped = vehicle_df.groupby(['vin'])
+
             
 
 #DF=vehicle_df[vehicle_df['vin']=='JTDKDTB36H1592743']
@@ -138,6 +146,10 @@ mi = pd.MultiIndex.from_product([DL], names=['datetime'])
 
 
 base_series = pd.Series(index=mi).fillna(value=0)
+
+
+
+
 
 mi_df = pd.DataFrame(columns=mi)
 supply_df = pd.DataFrame()
@@ -186,12 +198,20 @@ def collapse_is_available_events(group):
 
     if not supply_df.shape[0] % 1000:
         print(f'{supply_df.shape[0]} events collapsed')
-        
+
+
+group=vehicle_df[vehicle_df['vin']== 'JTDKDTB30H1592639']  
+       
         
         
 def collapse_public_availability_events(group):
     global supply_df
+    #group['a']=group['event_datetime']
+    #group.set_index('a', sorted=True)
     group = group.sort_values(by='event_datetime')
+    #group=group.nlargest(len(group)).compute()
+    
+    
 
     # get time of change of states where the vehicle goes from unavailable to available for public use
     # this is where is_available is true and in_public_group is true
@@ -205,15 +225,18 @@ def collapse_public_availability_events(group):
 
     # can't assume symmetry for events
     # can't tell which event comes first
-    merged_group = pd.merge_asof(left, right, left_on='unavailable_at', right_on='available_at')
+    merged_group = ddf.merge_asof(left, right, left_on='unavailable_at', right_on='available_at')
     supply_df = supply_df.append(merged_group)
 
     global vehicle_df_vin_grouped
 
     if not supply_df.shape[0] % 1000:
         print(f'{supply_df.shape[0]} events collapsed')
+            
         
-        
+  
+vehicle_df=vehicle_df.compute()
+      
 # construct large dow/hour df
 # NOTE: very expensive. should save intermediates so don't have to regenerate
 def extractor(x):
@@ -287,8 +310,6 @@ def ls(x):
 
 k=blue_df.apply(ls,axis=1)
 """
-
-#x=df.iloc[0]
 def extractor2(x):
     global mi_df
     temp = deepcopy(base_series)
@@ -321,7 +342,7 @@ def extractor2(x):
                 else:
                     temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += k  # ex: 3:30 - 3:00 = 30m
             elif n == (x.size - 2):  # second to last element, can't assume full hour
-                temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += 60  # ex: 3:30 - 3:00 = 30m
+                temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += k  # ex: 3:30 - 3:00 = 30m
             else:  # middle of array
                 temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += 60 # ex: 3:30 - 2:30 = 1h
             n += 1
@@ -334,54 +355,6 @@ def extractor2(x):
         print(f'mask {mi_df.shape[0]/df.shape[0] * 100}% complete')
 
 
-#x=df.iloc[0]
-def extractor3(x):
-    global mi_df
-    temp = deepcopy(base_series)
-    # duration less than 1 hour, does span across slice (hour) ex: [1:30, 2:15]
-    if x.size == 2 and x[0].hour != x[1].hour:
-        temp[datetime.strptime(str(x[0])[0:13], '%Y-%m-%d %H')] += 60 - x[0].minute
-        temp[datetime.strptime(str(x[1])[0:13], '%Y-%m-%d %H')] += x[1].minute
-
-    # duration less than 1 hour, doesn't span across slice (hour) ex: [1:30, 1:45]
-    elif x.size == 2 and x[0].hour == x[1].hour:
-        temp[datetime.strptime(str(x[0])[0:13], '%Y-%m-%d %H')] += x[1].minute - x[0].minute
-
-    # duration greater than 1 hour, does span across slice (hour) ex: [1:30, 2:30, 2:45]
-    elif x.size == 3 and x[1].hour == x[2].hour:
-        temp[datetime.strptime(str(x[0])[0:13], '%Y-%m-%d %H')] += 60 - x[0].minute
-        temp[datetime.strptime(str(x[2])[0:13], '%Y-%m-%d %H')] += x[2].minute
-
-    else:
-        # duration greater than 2 hours, ex: [1:30, 2:30, 3:30, 3:45]
-        # or spans across multiple hours
-        n = 0
-        min_marker = x[0].minute
-        for i, k in zip(x, x.minute):
-            # each datetimeindex
-            if n == 0: # first element => 60 - 30 = 30
-                temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += (60 - k)
-            elif n == (x.size - 1):  # last element, can't assume full hour
-                if k <= min_marker:
-                    temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += k # ex: 3:45 - 3:30 = 15m
-                else:
-                    temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += (k - min_marker)   # ex: 3:30 - 3:00 = 30m
-            elif n == (x.size - 2):  # second to last element, can't assume full hour
-                if x[-1].minute <= min_marker: # <--- change
-                    temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += 60
-                else:
-                    temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += k  # ex: 3:30 - 3:00 = 30m
-                #temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += 60  # ex: 3:30 - 3:00 = 30m
-            else:  # middle of array
-                temp[datetime.strptime(str(i)[0:13], '%Y-%m-%d %H')] += 60 # ex: 3:30 - 2:30 = 1h
-            n += 1
-    mi_df = mi_df.append(temp, ignore_index=True)
-    # get size incoming vehicle events
-    global df
-    # determine size of mi_df
-    # report every 10000 events
-    if not mi_df.shape[0] % 10000:
-        print(f'mask {mi_df.shape[0]/df.shape[0] * 100}% complete')
 
 
 
@@ -390,7 +363,9 @@ print('Collapsing events...')
 collapse_init_time = time.time()
 #vehicle_df_vin_grouped.apply(collapse_is_available_events)
 
-vehicle_df_vin_grouped.apply(collapse_public_availability_events)
+
+
+supply_df=vehicle_df_vin_grouped.apply(collapse_public_availability_events,meta=pd.DataFrame(columns=supply_df.columns))
 print(f'Collapse time: {time.time() - collapse_init_time}s')
 
 supply_df = supply_df.dropna()
@@ -436,7 +411,7 @@ print(time.time()-st)
 
 print('Extracting events...')
 extract_init_time = time.time()
-df.apply(extractor3)
+df.apply(extractor2)
 print(f'Extract time: {time.time() - extract_init_time}s')
 
 # merge the big dow/hour mask back with vehicle_update data
@@ -454,11 +429,8 @@ unaltered=['unavailable_at',
  'lng',
  'status',
  'available_at',
- 'in_public_group',
- 'public_availability',
  'idle_duration',
- 'idle_duration_minutes',
- 'vehicle_group_ids']
+ 'idle_duration_minutes']
 KD=kd.copy()
 
 KD.drop(columns=unaltered,inplace=True)
@@ -474,17 +446,3 @@ df2=df2[df2['Minutes']!=0]
 df2.to_csv('Supply_Data.csv',index=False)
 
 #df2.to_csv('Supply_Data.csv',index=False,date_format='%Y-%m-%d %H')
-
-
-
-"""
-pd.date_range(supply_df['available_at'].iloc[1], supply_df['unavailable_at'].iloc[1], freq='H', closed='left')     
-
-
-datetime.strptime(str(x[0])[0:13], '%Y-%m-%d %H')
-
-"""
-
-
-
-print(f'Final Time: {time.time() - start_time}s')
