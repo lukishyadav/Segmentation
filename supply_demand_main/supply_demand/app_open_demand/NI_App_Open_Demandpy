@@ -5,13 +5,14 @@ Created on Fri Aug  9 15:31:19 2019
 
 @author: lukishyadav
 """
+
 import time
 st=time.time()
-
-
 import sys
 # the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
-sys.path.append('/Users/lukishyadav/Desktop/segmentation/supply_demand_main/codes/flow')
+sys.path.append('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand')
+
+
 
 import sd_module as sd
 
@@ -64,26 +65,67 @@ from matplotlib import pyplot as plt
 #df=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_90/hex_edge_24.911m_quantile_3_daily.csv')
 #174.376,  461.355, 1220.63
 
-[174.376,461.355,1220.63]
 
-#file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_quantile_3_hourly.csv'
+#file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_30/hex_edge_461.355m_quantile_3_hourly.csv'
 
-file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
+file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/known_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
 
 
 df=pd.read_csv(file)
 
 #Supply_Demand_Data_Sync
-dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+dfu=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/unknown_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+
 
 CL=df.columns
-CL2=dfd.columns
-CL3=set(CL).intersection(CL2)
-df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='inner')
+CL2=dfu.columns
+CL3=set(CL2).intersection(CL)
 
-cals=list(CL3)
+DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='inner')
+
+CL3.remove('timeseries')
+
+for x in CL3:
+    DF[x]=DF[x+'_x']+DF[x+'_y']
+
+
+CL3.add('timeseries')
+DF2=DF[CL3]
+
+
+
+
+
+
+
+
+
+
+
+
+#Supply_Demand_Data_Sync
+dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+
+dfs=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+
+CL=dfs.columns
+CL2=dfd.columns
+CL4=DF2.columns
+CL3=set(CL2).intersection(CL)
+CL5=set(CL4).intersection(CL3)
+
+
+dff=pd.merge(dfs['timeseries'],dfd['timeseries'],on='timeseries',how='inner')
+
+DF3=pd.merge(dff['timeseries'],DF2[CL5],on='timeseries',how='inner')
+
+
+cals=list(CL5)
 cals.sort(reverse=True)
-df=df[cals]
+DF2=DF2[cals]
+
+
+df=DF2.copy()
 
 import re
 result = re.search('ge_(.*)_hourly', file)
@@ -101,29 +143,73 @@ LLL=[str(i) for i in range((LL-1))]
 
 df.columns=['date']+LLL
 
-#key=len(LLL)-2
-#key=0
 
-#for key in range(len(LLL)):
-for key in range(37,len(LLL)):    
-    
-    file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
+
+#key=len(LLL)-2
+
+#key=0
+for key in range(len(LLL)):
+#for key in range(43,len(LLL)):    
+
+    file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/known_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
 
 
     df=pd.read_csv(file)
     
     #Supply_Demand_Data_Sync
-    dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    dfu=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/unknown_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    
     
     CL=df.columns
-    CL2=dfd.columns
-    CL3=set(CL).intersection(CL2)
-    df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='inner')
+    CL2=dfu.columns
+    CL3=set(CL2).intersection(CL)
     
-    cals=list(CL3)
+    DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='inner')
+    
+    CL3.remove('timeseries')
+    
+    for x in CL3:
+        DF[x]=DF[x+'_x']+DF[x+'_y']
+    
+    
+    CL3.add('timeseries')
+    DF2=DF[CL3]
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    #Supply_Demand_Data_Sync
+    dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    
+    dfs=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    
+    CL=dfs.columns
+    CL2=dfd.columns
+    CL4=DF2.columns
+    CL3=set(CL2).intersection(CL)
+    CL5=set(CL4).intersection(CL3)
+    
+    
+    dff=pd.merge(dfs['timeseries'],dfd['timeseries'],on='timeseries',how='inner')
+    
+    DF3=pd.merge(dff['timeseries'],DF2[CL5],on='timeseries',how='inner')
+    
+    
+    cals=list(CL5)
     cals.sort(reverse=True)
-    df=df[cals]
-
+    DF2=DF2[cals]
+    
+    
+    df=DF2.copy()
+    
     import re
     result = re.search('ge_(.*)_hourly', file)
     print(result.group(1))
@@ -142,9 +228,10 @@ for key in range(37,len(LLL)):
 
 
 
-    dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/images/supply/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
-    
+
+    dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/images/app_open_demand/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
     os.mkdir(dpath)
+    
     
     metric='hours'
     agg=6
@@ -202,7 +289,7 @@ for key in range(37,len(LLL)):
     try:
      val=statistics.mode(actual_data[str(key)])
     except statistics.StatisticsError:
-     val=dict(collections.Counter(actual_data[str(key)])) 
+     val=dict(collections.Counter(actual_data[str(key)]) ) 
     
     if type(val)==dict: 
      val=max(val, key=val.get)
@@ -244,8 +331,12 @@ for key in range(37,len(LLL)):
     
     
     DDFF=df.groupby(['year','month','day','hchunk']).agg(dic)
+
+    
+
     #import inspect
     #inspect.getfullargspec(timedelta) 
+    
     
     DDFF['counts']=DDFF[str(key)]
     
@@ -277,6 +368,7 @@ for key in range(37,len(LLL)):
     Fdict={}
     
     allp={}
+    
     
     for win in windows:
         
@@ -389,11 +481,12 @@ for key in range(37,len(LLL)):
         
          ensemble=list(np.around(np.array(sum_vector),0).reshape(1,-1)[0])
          aa_forecast=np.around(vector2,0)
-         output=np.around(forecast,0)
-         
-         rmse={x:sqrt(mean_squared_error(original[-N:].values, eval(x))) for x in ['aa_forecast','ensemble','output']}
+         output=np.around(vector2,0)
          
          allp[win]={'aa_forecast':aa_forecast,'ensemble':ensemble,'rolling_mean':output}
+         
+         rmse={x:sqrt(mean_squared_error(original[-N:].values, eval(x))) for x in ['aa_forecast','ensemble','output']}
+        
          # Selecting minimum RNSE value model
          chosen_one=min(rmse, key=rmse.get)   
         
@@ -418,7 +511,7 @@ for key in range(37,len(LLL)):
          plt.legend()
          plt.title('lat_lng:'+store[key+1][1:-1]+' P_Value: '+str(P))
          plt.xlabel('Progression in '+str(metric))
-         plt.ylabel('Supply')
+         plt.ylabel('Demand')
          plt.savefig(dpath+'/Output_window'+str(win)+'.png')
          plt.clf()
        
@@ -682,7 +775,7 @@ for key in range(37,len(LLL)):
             plt.title('lat_lng:'+store[key+1][1:-1]+' P_Value: '+str(P))
             #plt.xlabel('Progression in '+str(metric))
             plt.xlabel('Progression in '+'quarter day')
-            plt.ylabel('Supply')
+            plt.ylabel('Demand')
             plt.savefig(dpath+'/Output_window'+str(win)+'.png')
             plt.clf()
             #return scaler,lstm_model
@@ -723,21 +816,20 @@ for key in range(37,len(LLL)):
     plt.title('lat_lng:'+store[key+1][1:-1]+' P_Value: '+str(P))
     #plt.xlabel('Progression in '+str(metric))
     plt.xlabel('Progression in '+'quarter day')
-    plt.ylabel('Supply')
+    plt.ylabel('Demand')
     plt.savefig(dpath+'/Final_Output_window'+str(mkey)+'.png')
     plt.clf()
     op=pd.DataFrame(np.array([[str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)],[str({'o':original[-N:].values.reshape(1,-1)})]]).T,
                     columns=['Best RMSE for windows','Best Model for Windows','Prediction of best model',
                 'All Predicted Outputs','Original'])
-    #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
+   #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
     op.to_csv(dpath+'/OutputFile_Key_'+str(key)+'.csv')
     #return scaler,lstm_model
     
     
     
-print(time.time()-st)  
-        
     
+print(time.time()-st)  
     
     
     

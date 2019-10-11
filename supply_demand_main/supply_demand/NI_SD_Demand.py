@@ -6,6 +6,8 @@ Created on Fri Aug  9 15:31:19 2019
 @author: lukishyadav
 """
 
+import time
+st=time.time()
 import sys
 # the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
 sys.path.append('/Users/lukishyadav/Desktop/segmentation/supply_demand_main/codes/flow')
@@ -103,7 +105,8 @@ df.columns=['date']+LLL
 #key=len(LLL)-2
 
 #key=0
-for key in range(len(LLL)):
+#for key in range(len(LLL)):
+for key in range(43,len(LLL)):    
 
     file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
 
@@ -115,7 +118,7 @@ for key in range(len(LLL)):
     
     CL=df.columns
     CL2=dfd.columns
-    CL3=set(CL).intersection(CL2)
+    CL3=set(CL2).intersection(CL)
     df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='inner')
     
     cals=list(CL3)
@@ -201,9 +204,9 @@ for key in range(len(LLL)):
     try:
      val=statistics.mode(actual_data[str(key)])
     except statistics.StatisticsError:
-     val=collections.Counter(actual_data[str(key)])  
+     val=dict(collections.Counter(actual_data[str(key)]) ) 
     
-    if val==dict: 
+    if type(val)==dict: 
      val=max(val, key=val.get)
      
     actual_data[str(key)].fillna(val,inplace=True)
@@ -728,17 +731,17 @@ for key in range(len(LLL)):
     plt.ylabel('Demand')
     plt.savefig(dpath+'/Final_Output_window'+str(mkey)+'.png')
     plt.clf()
-    op=pd.DataFrame(np.array([[str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)]]).T,
+    op=pd.DataFrame(np.array([[str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)],[str({'o':original[-N:].values.reshape(1,-1)})]]).T,
                     columns=['Best RMSE for windows','Best Model for Windows','Prediction of best model',
-                'All Predicted Outputs'])
-    #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
+                'All Predicted Outputs','Original'])
+   #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
     op.to_csv(dpath+'/OutputFile_Key_'+str(key)+'.csv')
     #return scaler,lstm_model
     
     
     
     
-    
+print(time.time()-st)  
     
     
     
