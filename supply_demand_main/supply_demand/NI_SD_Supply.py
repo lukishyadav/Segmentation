@@ -104,8 +104,8 @@ df.columns=['date']+LLL
 #key=len(LLL)-2
 #key=0
 
-#for key in range(len(LLL)):
-for key in range(37,len(LLL)):    
+for key in range(len(LLL)):
+#for key in range(37,len(LLL)):    
     
     file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
 
