@@ -79,8 +79,8 @@ dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supp
 CL=df.columns
 CL2=dfd.columns
 CL3=set(CL).intersection(CL2)
-df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='inner')
-
+df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='outer')
+df.fillna(0,inplace=True)
 cals=list(CL3)
 cals.sort(reverse=True)
 df=df[cals]
@@ -118,7 +118,8 @@ for key in range(len(LLL)):
     CL=df.columns
     CL2=dfd.columns
     CL3=set(CL).intersection(CL2)
-    df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='inner')
+    df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='outer')
+    df.fillna(0,inplace=True)
     
     cals=list(CL3)
     cals.sort(reverse=True)

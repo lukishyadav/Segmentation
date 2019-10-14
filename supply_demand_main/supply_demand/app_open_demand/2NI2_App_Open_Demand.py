@@ -10,7 +10,7 @@ import time
 st=time.time()
 import sys
 # the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
-sys.path.append('/Users/lukishyadav/Desktop/segmentation/supply_demand_main/codes/flow')
+sys.path.append('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand')
 
 
 
@@ -68,23 +68,65 @@ from matplotlib import pyplot as plt
 
 #file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/data_big/data/quadrant_0/timescale_30/hex_edge_461.355m_quantile_3_hourly.csv'
 
-file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
+
+
+#Supply_Demand_Data_Sync
+dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+
+dfs=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+
+CL=dfs.columns
+CL2=dfd.columns
+#CL4=DF2.columns
+CL3=set(CL2).intersection(CL)
+
+
+
+
+
+file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/known_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
 
 
 df=pd.read_csv(file)
 
 #Supply_Demand_Data_Sync
-dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+dfu=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/unknown_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
 
-CL=df.columns
-CL2=dfd.columns
-CL3=set(CL2).intersection(CL)
-df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='outer')
-df.fillna(0,inplace=True)
+for n in CL3: 
+    if n not in df.columns:
+        df[n]=[0 for n in range(len(df))]
+    elif n not in dfu.columns:
+        dfu[n]=[0 for n in range(len(dfu))]
+
+DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='outer')
+
+DF.fillna(0,inplace=True)
+
+# =============================================================================
+# CL=df.columns
+# CL2=dfu.columns
+# CL3=set(CL2).intersection(CL)
+# 
+# DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='inner')
+# 
+# =============================================================================
+CL3.remove('timeseries')
+
+for x in CL3:
+    DF[x]=DF[x+'_x']+DF[x+'_y']
+
+
+CL3.add('timeseries')
+DF2=DF[CL3]
+
+
 
 cals=list(CL3)
 cals.sort(reverse=True)
-df=df[cals]
+DF2=DF2[cals]
+
+
+df=DF2.copy()
 
 import re
 result = re.search('ge_(.*)_hourly', file)
@@ -103,30 +145,71 @@ LLL=[str(i) for i in range((LL-1))]
 df.columns=['date']+LLL
 
 
+
 #key=len(LLL)-2
 
 #key=0
-for key in range(len(LLL)):
+for key in range(46,len(LLL)):
 #for key in range(43,len(LLL)):    
 
-    file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
-
+    #Supply_Demand_Data_Sync
+    dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    
+    dfs=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/supply/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    
+    CL=dfs.columns
+    CL2=dfd.columns
+    #CL4=DF2.columns
+    CL3=set(CL2).intersection(CL)
+    
+    
+    
+    
+    
+    file='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/known_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv'
+    
     
     df=pd.read_csv(file)
     
     #Supply_Demand_Data_Sync
-    dfd=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/data/demand/darwin_rentals_time_loc_data_20180701_20190701_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
+    dfu=pd.read_csv('/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/app_open_demand/unknown_trips_breakdown/quadrant_0/timescale_30/hex_edge_461.355m_all_hexes_hourly.csv')
     
-    CL=df.columns
-    CL2=dfd.columns
-    CL3=set(CL2).intersection(CL)
-    df=pd.merge(df['timeseries'],dfd[CL3],on='timeseries',how='outer')
-    df.fillna(0,inplace=True)
+    for n in CL3: 
+        if n not in df.columns:
+            df[n]=[0 for n in range(len(df))]
+        elif n not in dfu.columns:
+            dfu[n]=[0 for n in range(len(dfu))]
+    
+    DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='outer')
+    
+    DF.fillna(0,inplace=True)
+    
+    # =============================================================================
+    # CL=df.columns
+    # CL2=dfu.columns
+    # CL3=set(CL2).intersection(CL)
+    # 
+    # DF=pd.merge(df[CL3],dfu[CL3],on='timeseries',how='inner')
+    # 
+    # =============================================================================
+    CL3.remove('timeseries')
+    
+    for x in CL3:
+        DF[x]=DF[x+'_x']+DF[x+'_y']
+    
+    
+    CL3.add('timeseries')
+    DF2=DF[CL3]
+    
+    
     
     cals=list(CL3)
     cals.sort(reverse=True)
-    df=df[cals]
-
+    DF2=DF2[cals]
+    
+    
+    df=DF2.copy()
+    
     import re
     result = re.search('ge_(.*)_hourly', file)
     print(result.group(1))
@@ -144,9 +227,10 @@ for key in range(len(LLL)):
     df.columns=['date']+LLL
 
 
-    
-    
-    dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/images/demand/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
+
+
+
+    dpath='/Users/lukishyadav/Desktop/Segmentation/supply_demand_main/supply_demand/images/app_open_demand/'+result.group(1)+'_key_'+str(key)+'_'+store[key+1][1:-1]
     os.mkdir(dpath)
     
     
@@ -248,6 +332,9 @@ for key in range(len(LLL)):
     
     
     DDFF=df.groupby(['year','month','day','hchunk']).agg(dic)
+
+    
+
     #import inspect
     #inspect.getfullargspec(timedelta) 
     
