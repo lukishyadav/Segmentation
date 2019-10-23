@@ -139,6 +139,9 @@ df.columns=['date']+LLL
 master=pd.DataFrame(data=np.array([[0 for i in range(len(LLL))],[0 for i in range(len(LLL))],[0 for i in range(len(LLL))]]).T,columns=['Hex','Supply-Demand_Prediction','Original Data'])
 #key=len(LLL)-2
 #key=0
+LLL=[str(i) for i in [36,34,29,27,24,22,15]]
+
+
 mpath='/Users/lukishyadav/Desktop/sd_result' 
 for key in LLL:
     
@@ -274,7 +277,11 @@ for key in LLL:
 
 #mpath='/Users/lukishyadav/Desktop/sd_result'  
 master.to_html('test.html', escape=False)
-    
+ 
+
+master = master[(master.T != 0).any()]   
+
+master.to_html('test.html', escape=False)
 
 
 """

@@ -136,9 +136,12 @@ LLL=[str(i) for i in range((LL-1))]
 df.columns=['date']+LLL
 
 
-master=pd.DataFrame(data=np.array([[0 for i in range(len(LLL))],[0 for i in range(len(LLL))],[0 for i in range(len(LLL))]]).T,columns=['Hex','Supply-Demand_Prediction','Original Data'])
+master=pd.DataFrame(data=np.array([[0 for i in range(len(LLL))],[0 for i in range(len(LLL))],[0 for i in range(len(LLL))],[0 for i in range(len(LLL))],[0 for i in range(len(LLL))]]).T,columns=['Hex','Supply-Demand_Prediction','Original Data','OAP_points','Evaluation'])
 #key=len(LLL)-2
 #key=0
+#LLL=[str(i) for i in [36,34,29,27,24,22,15]]
+
+
 mpath='/Users/lukishyadav/Desktop/sd_result' 
 for key in LLL:
     
@@ -179,6 +182,13 @@ for key in LLL:
     ad_best_model=eval(adframe['Best Model for Windows'].iloc[0])[ad_win]
     ad_original=eval(adframe['Original'].iloc[0])['o']
     
+    from sklearn.metrics import mean_squared_error,mean_absolute_error,r2_score
+    from math import sqrt
+    mse=mean_squared_error(ad_original[0], ad_best_prediction)
+    rmse=sqrt(mean_squared_error(ad_original[0], ad_best_prediction))
+    mae=mean_absolute_error(ad_original[0], ad_best_prediction)
+    r2=r2_score(ad_original[0], ad_best_prediction)
+    
     def a_original(path):
         ffc=pd.read_csv(path+'/original_data_'+str(key)+'.csv')
         ffc['original_data']
@@ -209,22 +219,12 @@ for key in LLL:
     plt.clf()
     """
     
-    fig = plt.figure()
 
-    plt.subplot(2, 2, 1)
-    plt.plot(s_original[0],label='SO')
-    plt.plot(s_best_prediction,label='SP ('+s_best_model+')'+'BW :'+str(s_win))
-    plt.legend()
-    
-    plt.subplot(2, 2, 2)
-    plt.plot(d_original[0],label='DO')
-    plt.plot(d_best_prediction,label='DP ('+d_best_model+')'+'BW :'+str(d_win))
-    plt.legend()
-    
-    plt.subplot(2, 2, 3)
     plt.plot(ad_original[0],label='AODO')
     plt.plot(ad_best_prediction,label='AODOP ('+ad_best_model+')'+'BW :'+str(ad_win))
     plt.legend()
+    plt.xlabel('Progression in '+'quarter day')
+    plt.ylabel('Value')
     
     plt.savefig('Image'+str(key)+'.png')
     plt.clf()
@@ -245,19 +245,11 @@ for key in LLL:
 #     plt.clf()
 # =============================================================================
     
-    fig = plt.figure()
-
-    plt.subplot(2, 2, 1)
-    plt.plot(d_all_o,label='Supply Original Window :'+str(s_win))
-    plt.legend()
     
-    plt.subplot(2, 2, 2)
-    plt.plot(s_all_o,label='Demand Original Window :'+str(d_win))
-    plt.legend()
-    
-    plt.subplot(2, 2, 3)
     plt.plot(ad_all_o,label='App-open Demand Original Window :'+str(ad_win))
     plt.legend()
+    plt.xlabel('Progression in '+'quarter day')
+    plt.ylabel('Value')
     plt.savefig('Original'+str(key)+'.png')
     plt.clf()
     #plt.show()
@@ -268,13 +260,36 @@ for key in LLL:
     opath='Original'+str(key)+'.png'
     master['Supply-Demand_Prediction'].iloc[int(key)]='<img src="{}" /> '.format(ppath)
     master['Original Data'].iloc[int(key)]='<img src="{}" /> '.format(opath)
+    master['OAP_points'].iloc[int(key)]=str({'Og':list(ad_original[0]),'Pred':list(ad_best_prediction)})
+    master['Evaluation'].iloc[int(key)]=str({'rmse':rmse,'mse':mse,'mae':mae,'r2':r2})   
     master['Hex'].iloc[int(key)]='Hex_no:'+str(key)+' LL_value:'+store[int(key)+1]
     #master.to_html(dpath+'/test.html', escape=False)
     #plt.savefig(dpath+'/Final_Output_window'+str(mkey)+'.png')
 
 #mpath='/Users/lukishyadav/Desktop/sd_result'  
 master.to_html('test.html', escape=False)
-    
+ 
+master['rmse']=master['Evaluation'].apply(lambda x:eval(x)['rmse'])
+master['mse']=master['Evaluation'].apply(lambda x:eval(x)['mse'])
+master['mae']=master['Evaluation'].apply(lambda x:eval(x)['mae'])
+master['r2']=master['Evaluation'].apply(lambda x:eval(x)['r2'])
+
+
+
+CCCC=['Hex', 'Supply-Demand_Prediction', 'Original Data', 'OAP_points',
+       'Evaluation']
+
+df_rmse=master.sort_values(['rmse'], ascending=True)
+df_rmse.to_html('rmse.html', escape=False)
+df_mse=master.sort_values(['mse'], ascending=True)
+df_mse.to_html('mse.html', escape=False)
+
+df_mae=master.sort_values(['mae'], ascending=True)
+df_mae.to_html('mae.html', escape=False)
+
+master = master[(master.T != 0).any()]   
+
+master.to_html('test.html', escape=False)
 
 
 """
