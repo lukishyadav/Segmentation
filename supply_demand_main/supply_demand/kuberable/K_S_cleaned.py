@@ -489,6 +489,9 @@ for key in range(len(LLL)):
             
          rmse={x:sqrt(mean_squared_error(original[-N:].values, eval(x))) for x in ['aa_forecast','ensemble','output']}
          
+         AO[win]={x:eval(x) for x in ['aa_forecast','ensemble','output']}
+         
+         
          allp[win]={'aa_forecast':aa_forecast,'ensemble':ensemble,'rolling_mean':output}
          # Selecting minimum RNSE value model
          chosen_one=min(rmse, key=rmse.get)   
@@ -710,6 +713,8 @@ for key in range(len(LLL)):
             
             rmse={x:sqrt(mean_squared_error(original[-N:].values, eval(x))) for x in ['aa_forecast','ensemble','ooutput']}
             
+            AO[win]={x:eval(x) for x in ['aa_forecast','ensemble','ooutput']}
+         
             # Selecting minimum RNSE value model
             chosen_one=min(rmse, key=rmse.get)   
             
@@ -784,10 +789,10 @@ for key in range(len(LLL)):
     plt.ylabel('Supply')
     plt.savefig(dpath+'/Final_Output_window'+str(mkey)+'.png')
     plt.clf()
-    op=pd.DataFrame(np.array([[str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)],[str({'o':original[-N:].values.reshape(1,-1)})]]).T,
+    op=pd.DataFrame(np.array([[str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)],[str({'o':original[-N:].values.reshape(1,-1)})],[str(AO)]]).T,
                     columns=['Best RMSE for windows','Best Model for Windows','Prediction of best model',
-                'All Predicted Outputs','Original'])
-    #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
+                'All Predicted Outputs','Original','all_outputs'])
+  #op.iloc[0]=np.array([str(Mdict)],[str(Cdict)],[str(Pdict)],[str(allp)])
     op.to_csv(dpath+'/OutputFile_Key_'+str(key)+'.csv')
     #return scaler,lstm_model
     

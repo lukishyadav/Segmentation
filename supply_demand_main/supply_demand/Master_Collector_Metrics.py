@@ -287,6 +287,10 @@ df_mse.to_html('mse.html', escape=False)
 df_mae=master.sort_values(['mae'], ascending=True)
 df_mae.to_html('mae.html', escape=False)
 
+df_r2=master.sort_values(['r2'], ascending=False)
+df_r2.to_html('r2.html', escape=False)
+
+
 master = master[(master.T != 0).any()]   
 
 master.to_html('test.html', escape=False)

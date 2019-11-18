@@ -1,0 +1,277 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Oct 23 18:51:20 2019
+
+@author: lukishyadav
+"""
+
+import pandas as pd
+
+df=pd.read_csv('PredictiveMaintenanceFeature_2019-10-23_1557.csv')
+
+
+df[df['distance driven']<0]
+
+
+df[df['Fuel Used']<0]
+
+
+df['Fuel Used'].hist()
+
+
+df.dropna(inplace=True)
+
+
+def flag(x):
+    if (x['object_data-fuel_percent_start']>x['object_data-fuel_percent_end']) and x['distance driven']>0:
+        return 1
+    elif (x['object_data-fuel_percent_start']==x['object_data-fuel_percent_end']) and x['distance driven']==0:
+        return 1
+    else:
+        return 0
+    
+df['flag']=df.apply(flag,axis=1)
+
+
+
+DF=df[df['flag']==1]
+
+
+DF[['object_data-rating_score','distance driven','Fuel Used']].corr()
+
+
+
+from sklearn.preprocessing import StandardScaler
+
+
+pd.crosstab(DF['distance driven'], DF['object_data-rating_score'], normalize='index')
+
+
+
+
+
+ 
+ 
+
+
+global outlier
+def outlier(DF_F2,x):
+    DD=DF_F2[x].copy()
+    DD=DD.to_frame()
+    Q1 = DD.quantile(0.25)
+    Q3 = DD.quantile(0.75)
+    IQR = Q3 - Q1 
+    UL=(Q3 + 1.5 * IQR)
+    LL=(Q1 - 1.5 * IQR)
+    DF_F2 = DF_F2[~((DD < (Q1 - 1.5 * IQR)) |(DD > (Q3 + 1.5 * IQR))).any(axis=1)]
+    print('IQR:',IQR,'Q1:',Q1,'Q3:',Q3,'UL',(Q3 + 1.5 * IQR))
+    return IQR,Q1,Q3,LL,UL,DF_F2
+
+fd=df[(df['distance driven']<2000) & (df['distance driven']>0)]
+
+fd['distance driven'].hist(bins=1000)
+
+
+"""
+Trimmed Mean
+
+variance inflation factor
+
+condition number
+"""
+
+IQR,Q1,Q3,LL,UL,DF2=outlier(df,'distance driven')
+
+DF2['distance driven'].hist()
+
+
+IQR,Q1,Q3,LL,UL,DF3=outlier(DF2,'Fuel Used')
+
+
+DF3['Fuel Used'].hist()
+
+
+DF3['distance driven'].hist()
+
+
+
+
+import collections 
+collections.Counter(df['Fuel Used'])
+
+import collections 
+collections.Counter(DF3['Fuel Used'])
+
+
+
+def dd(x):
+    if x<=2.5:
+        return 1
+    elif x>2.5 and x<=7.5:
+        return 2
+    else:
+        return 3
+
+
+def fu(x):
+    if x>=0 and x<1.5:
+        return 1
+    elif x>1.5 and x<=3:
+        return 2
+    elif x>3 and x<=4.5:
+        return 3
+    else:
+        return 4
+
+
+    
+DF3['b_distance driven']=DF3['distance driven'].apply(dd)
+
+DF3['b_Fuel Used']=DF3['Fuel Used'].apply(fu)
+
+
+pd.crosstab(DF3['b_distance driven'], DF3['object_data-rating_score'], normalize='index')
+
+
+pd.crosstab(DF3['b_Fuel Used'], DF3['object_data-rating_score'], normalize='index')
+
+
+DF3[['object_data-rating_score','b_distance driven','b_Fuel Used']].corr()
+
+
+
+X=DF3[['distance driven','Fuel Used']]
+y=DF3[['object_data-rating_score']]
+
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, random_state=42)
+
+
+
+scaler = StandardScaler()
+scaler.fit(X_train)
+sxtrain=scaler.transform(X_train)
+
+sxtest=scaler.transform(X_test)
+
+
+
+
+
+
+
+
+from sklearn.linear_model import LogisticRegression
+    
+clf = LogisticRegression(random_state=0, solver='lbfgs',
+                    multi_class='multinomial').fit(X_train, y_train)
+
+
+clf.score(X_test,y_test)
+
+
+clf = LogisticRegression(random_state=0, solver='lbfgs',
+                    multi_class='multinomial').fit(sxtrain, y_train)
+
+
+clf.score(sxtest,y_test)
+
+
+
+clf = LogisticRegression().fit(sxtrain, y_train)
+
+
+clf.score(sxtest,y_test)
+
+
+
+from sklearn.ensemble import GradientBoostingClassifier
+gb=GradientBoostingClassifier()
+gb.fit(sxtrain, y_train)
+
+gb.score(sxtest,y_test)
+
+
+
+from sklearn.metrics import confusion_matrix 
+from sklearn.metrics import accuracy_score 
+from sklearn.metrics import classification_report 
+actual = y_test
+predicted = gb.predict(sxtest)
+results = confusion_matrix(actual, predicted) 
+print('Confusion Matrix :')
+print(results) 
+print('Accuracy Score :',accuracy_score(actual, predicted) )
+print('Report : ')
+print(classification_report(actual, predicted))
+
+
+
+import collections 
+collections.Counter(DF3['object_data-rating_score'])
+
+
+
+from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
+
+
+"""
+Balancing Dataset performance Check!   (Little improvement)
+
+"""
+
+
+
+os = SMOTE(random_state=0)
+
+
+def performance_S(model,X,Y,seed):
+
+    kfold = model_selection.StratifiedKFold(n_splits=10, random_state=seed)
+    cv_results = model_selection.cross_val_score(model,X,Y, cv=kfold, scoring='recall')
+    print('recall: ',cv_results.mean())
+    
+    kfold = model_selection.StratifiedKFold(n_splits=10, random_state=seed)
+    cv_results = model_selection.cross_val_score(model,X,Y, cv=kfold, scoring='precision')
+    print('precision: ',cv_results.mean())
+    
+    kfold = model_selection.StratifiedKFold(n_splits=10, random_state=seed)
+    cv_results = model_selection.cross_val_score(model,X,Y, cv=kfold, scoring='accuracy')
+    print('accuracy: ',cv_results.mean())
+
+
+#Undersampling leads to bad performance
+#os=RandomUnderSampler(random_state=0)
+from sklearn.model_selection import KFold
+from sklearn import model_selection
+os_data_X,os_data_y=os.fit_sample(X,y)
+from sklearn.linear_model import LogisticRegression as LR
+performance_S(LR(penalty='l1',C=2,max_iter=100),os_data_X,os_data_y,7)
+
+FD=df.dropna()
+
+from scipy import stats
+m = stats.trim_mean(df['distance driven'], 0.05)
+
+import statistics
+
+from numpy import mean
+def outlier_trimmean(arr, percent):
+    n = len(arr)
+    k = int(round(n*(float(percent)/100)/2))
+    tmean=mean(arr[k+1:n-k])
+    tstd=statistics.stdev(arr[k+1:n-k])
+    return arr[(arr>(tmean-3*tstd)) & (arr<(tmean+3*tstd))]
+
+
+XX=outlier_trimmean(arr, percent)
+
+XX=outlier_trimmean(XX, percent)
+
+
+
+
+arr=FD['distance driven']
+percent=5

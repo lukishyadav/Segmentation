@@ -573,7 +573,7 @@ for key in range(46,47):
          PREDICTION INTERVAL
          
          """
-         
+         from numpy import sum as arraysum
          
          predicted_values=vector2
          actual_values=original[-N:].values.reshape(1,-1)[0]
